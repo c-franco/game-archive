@@ -1,0 +1,302 @@
+@page "/items/new"
+@page "/items/{Id:guid}"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>@(IsNew ? "New Item" : "Edit Item") — GameArchive</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">@(IsNew ? "New Item" : model.Name)</div>
+        <div class="page-subtitle">@(IsNew ? "Add to your collection" : "Edit details")</div>
+    </div>
+    <button class="btn btn-ghost" @onclick="() => Nav.NavigateTo(BackUrl)">← Back</button>
+</div>
+
+@if (loading)
+{
+    <div class="spinner-center"><div class="spinner"></div></div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(errorMsg))
+    {
+        <div class="alert alert-error">@errorMsg</div>
+    }
+    @if (!string.IsNullOrEmpty(successMsg))
+    {
+        <div class="alert alert-success">@successMsg</div>
+    }
+
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start">
+
+        <!-- Main form -->
+        <div class="card">
+            <div class="form-grid">
+
+                <div class="form-group span-2">
+                    <label>Name *</label>
+                    <input @bind="model.Name" placeholder="e.g. The Legend of Zelda: Ocarina of Time" />
+                </div>
+
+                <div class="form-group">
+                    <label>Type *</label>
+                    <select @bind="model.Type" @bind:after="OnTypeChanged">
+                        <option value="Game">Game</option>
+                        <option value="Console">Console</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Status</label>
+                    <select @bind="model.Status">
+                        <option value="Owned">Owned</option>
+                        <option value="Wishlist">Wishlist</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Platform</label>
+                    <input @bind="model.Platform" placeholder="e.g. SNES, Nintendo 64, PS1…" />
+                </div>
+
+                <div class="form-group">
+                    <label>Region</label>
+                    <select @bind="model.Region">
+                        <option value="">— Select —</option>
+                        <option value="PAL">PAL</option>
+                        <option value="NTSC-U">NTSC-U</option>
+                        <option value="NTSC-J">NTSC-J</option>
+                        <option value="NTSC">NTSC</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Condition</label>
+                    <select @bind="model.Condition">
+                        <option value="">— Select —</option>
+                        <option value="New">New</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                        <option value="Poor">Poor</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Purchase Date</label>
+                    <input type="date" @bind="model.PurchaseDate" />
+                </div>
+
+                <div class="form-group">
+                    <label>Purchase Price (€)</label>
+                    <input type="number" step="0.01" @bind="model.PurchasePrice" placeholder="0.00" />
+                </div>
+
+                <div class="form-group">
+                    <label>Estimated Current Value (€)</label>
+                    <input type="number" step="0.01" @bind="model.EstimatedValue" placeholder="0.00" />
+                </div>
+
+                <div class="form-group span-2">
+                    <label>Notes</label>
+                    <textarea @bind="model.Notes" placeholder="Condition details, where you got it, serial number…"></textarea>
+                </div>
+
+            </div>
+
+            <hr class="divider" />
+
+            <div style="display:flex;justify-content:flex-end;gap:10px">
+                @if (!IsNew)
+                {
+                    <button class="btn btn-danger" @onclick="DeleteItem">Delete Item</button>
+                }
+                <button class="btn btn-secondary" @onclick="() => Nav.NavigateTo(BackUrl)">Cancel</button>
+                <button class="btn btn-primary" @onclick="Save" disabled="@saving">
+                    @(saving ? "Saving…" : (IsNew ? "Add Item" : "Save Changes"))
+                </button>
+            </div>
+        </div>
+
+        <!-- Checklist -->
+        <div class="card">
+            <div style="font-weight:600;margin-bottom:14px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">
+                Checklist
+            </div>
+
+            @if (!model.ChecklistEntries.Any())
+            {
+                <div style="color:var(--text-3);font-size:0.875rem;text-align:center;padding:24px 0">
+                    No checklist items.<br/>Configure templates in Settings.
+                </div>
+            }
+            else
+            {
+                <div class="checklist">
+                    @foreach (var entry in model.ChecklistEntries.OrderBy(e => e.SortOrder))
+                    {
+                        <div class="checklist-item">
+                            <input type="checkbox" id="chk-@entry.Id" @bind="entry.IsChecked" />
+                            <label for="chk-@entry.Id">@entry.Label</label>
+                        </div>
+                    }
+                </div>
+                <div style="margin-top:12px;font-size:0.8rem;color:var(--text-2)">
+                    @model.ChecklistEntries.Count(e => e.IsChecked) / @model.ChecklistEntries.Count complete
+                </div>
+            }
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    [SupplyParameterFromQuery] public bool Wishlist { get; set; }
+
+    bool IsNew => Id == null;
+    bool loading = true, saving = false;
+    string errorMsg = "", successMsg = "";
+    string BackUrl => model.Status == "Wishlist" ? "/wishlist" : "/";
+
+    ItemFormModel model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsNew)
+        {
+            var item = await Http.GetFromJsonAsync<CollectionItemDto>($"api/items/{Id}");
+            if (item == null) { Nav.NavigateTo("/"); return; }
+
+            model = new ItemFormModel
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Type = item.Type,
+                Platform = item.Platform,
+                Region = item.Region,
+                Condition = item.Condition,
+                PurchasePrice = item.PurchasePrice,
+                EstimatedValue = item.EstimatedValue,
+                PurchaseDate = item.PurchaseDate,
+                Notes = item.Notes,
+                Status = item.Status,
+                ChecklistEntries = item.ChecklistEntries
+                    .Select(e => new ChecklistEntryForm { Id = e.Id, Label = e.Label, IsChecked = e.IsChecked, SortOrder = e.SortOrder })
+                    .ToList()
+            };
+        }
+        else
+        {
+            if (Wishlist) model.Status = "Wishlist";
+            await LoadChecklistTemplate();
+        }
+
+        loading = false;
+    }
+
+    async Task LoadChecklistTemplate()
+    {
+        var templates = await Http.GetFromJsonAsync<List<ChecklistTemplateDto>>("api/templates") ?? [];
+        model.ChecklistEntries = templates
+            .Where(t => t.ItemType == model.Type)
+            .OrderBy(t => t.SortOrder)
+            .Select(t => new ChecklistEntryForm { Id = Guid.NewGuid(), Label = t.Label, IsChecked = false, SortOrder = t.SortOrder })
+            .ToList();
+    }
+
+    async Task OnTypeChanged()
+    {
+        if (IsNew) await LoadChecklistTemplate();
+    }
+
+    async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(model.Name)) { errorMsg = "Name is required."; return; }
+
+        saving = true; errorMsg = ""; successMsg = "";
+
+        DateOnly? purchaseDate = null;
+
+        if (model.PurchaseDate.HasValue)
+            purchaseDate = DateOnly.FromDateTime(model.PurchaseDate.Value);
+
+        if (IsNew)
+        {
+            var cmd = new
+            {
+                model.Name,
+                Type           = Enum.Parse<int_ItemType>(model.Type),
+                model.Platform,
+                model.Region,
+                model.Condition,
+                model.PurchasePrice,
+                model.EstimatedValue,
+                PurchaseDate   = purchaseDate,
+                model.Notes,
+                Status         = Enum.Parse<int_ItemStatus>(model.Status)
+            };
+            var resp = await Http.PostAsJsonAsync("api/items", new
+            {
+                model.Name,
+                Type           = model.Type == "Game" ? 0 : 1,
+                model.Platform,
+                model.Region,
+                model.Condition,
+                model.PurchasePrice,
+                model.EstimatedValue,
+                PurchaseDate   = purchaseDate,
+                model.Notes,
+                Status         = model.Status == "Owned" ? 0 : 1
+            });
+
+            if (resp.IsSuccessStatusCode)
+            {
+                var body = await resp.Content.ReadFromJsonAsync<CreateResult>();
+                Nav.NavigateTo($"/items/{body!.Id}");
+                return;
+            }
+            errorMsg = "Failed to create item.";
+        }
+        else
+        {
+            var resp = await Http.PutAsJsonAsync($"api/items/{Id}", new
+            {
+                Id             = model.Id,
+                model.Name,
+                Type           = model.Type == "Game" ? 0 : 1,
+                model.Platform,
+                model.Region,
+                model.Condition,
+                model.PurchasePrice,
+                model.EstimatedValue,
+                PurchaseDate   = purchaseDate,
+                model.Notes,
+                Status         = model.Status == "Owned" ? 0 : 1,
+                ChecklistUpdates = model.ChecklistEntries
+                    .Select(e => new { EntryId = e.Id, e.IsChecked })
+                    .ToList()
+            });
+
+            if (resp.IsSuccessStatusCode) { successMsg = "Changes saved."; }
+            else errorMsg = "Failed to save changes.";
+        }
+
+        saving = false;
+    }
+
+    async Task DeleteItem()
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", $"Permanently delete \"{model.Name}\"?")) return;
+        await Http.DeleteAsync($"api/items/{Id}");
+        Nav.NavigateTo(model.Status == "Wishlist" ? "/wishlist" : "/");
+    }
+
+    // Dummy enum aliases for anonymous object serialisation (int values match C# enums)
+    enum int_ItemType { Game = 0, Console = 1 }
+    enum int_ItemStatus { Owned = 0, Wishlist = 1 }
+
+    record CreateResult(Guid Id);
+}

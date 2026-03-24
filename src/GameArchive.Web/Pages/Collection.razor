@@ -1,0 +1,162 @@
+@page "/"
+@page "/collection"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>Collection — GameArchive</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Collection</div>
+        <div class="page-subtitle">@(items?.Count ?? 0) items</div>
+    </div>
+    <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>
+        + Add Item
+    </button>
+</div>
+
+<div class="filters-bar">
+    <input class="search-input" placeholder="Search by name…" @bind="searchTerm" @bind:event="oninput" @bind:after="OnFilterChanged" />
+    <select @bind="filterType" @bind:after="OnFilterChanged">
+        <option value="">All Types</option>
+        <option value="Game">Game</option>
+        <option value="Console">Console</option>
+    </select>
+    <select @bind="filterPlatform" @bind:after="OnFilterChanged">
+        <option value="">All Platforms</option>
+        @foreach (var p in platforms)
+        {
+            <option value="@p">@p</option>
+        }
+    </select>
+    <select @bind="filterRegion" @bind:after="OnFilterChanged">
+        <option value="">All Regions</option>
+        <option value="PAL">PAL</option>
+        <option value="NTSC-U">NTSC-U</option>
+        <option value="NTSC-J">NTSC-J</option>
+        <option value="NTSC">NTSC</option>
+    </select>
+    <select @bind="filterCondition" @bind:after="OnFilterChanged">
+        <option value="">All Conditions</option>
+        <option value="New">New</option>
+        <option value="Good">Good</option>
+        <option value="Fair">Fair</option>
+        <option value="Poor">Poor</option>
+    </select>
+    <select @bind="sortBy" @bind:after="OnFilterChanged">
+        <option value="name">Sort: Name</option>
+        <option value="date">Sort: Date</option>
+        <option value="price">Sort: Price</option>
+        <option value="value">Sort: Value</option>
+    </select>
+    <button class="btn btn-secondary btn-sm" @onclick="ToggleSort">
+        @(descending ? "↓ Desc" : "↑ Asc")
+    </button>
+</div>
+
+@if (items == null)
+{
+    <div class="spinner-center"><div class="spinner"></div></div>
+}
+else if (!items.Any())
+{
+    <div class="card">
+        <div class="empty-state">
+            <div class="empty-icon">◈</div>
+            <div class="empty-title">No items found</div>
+            <div class="empty-desc">Add your first game or console to get started.</div>
+            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>+ Add Item</button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Platform</th>
+                    <th>Region</th>
+                    <th>Condition</th>
+                    <th>Paid</th>
+                    <th>Value</th>
+                    <th>Checklist</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    var checkedCount = item.ChecklistEntries.Count(e => e.IsChecked);
+                    var totalCount = item.ChecklistEntries.Count;
+                    <tr @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>
+                        <td class="td-name">@item.Name</td>
+                        <td>
+                            <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">@item.Type</span>
+                        </td>
+                        <td class="td-muted">@item.Platform</td>
+                        <td class="td-muted">@item.Region</td>
+                        <td class="td-muted">@item.Condition</td>
+                        <td class="td-muted">@FormatPrice(item.PurchasePrice)</td>
+                        <td class="td-muted">@FormatPrice(item.EstimatedValue)</td>
+                        <td>
+                            @if (totalCount > 0)
+                            {
+                                <span class="badge @(checkedCount == totalCount ? "badge-full" : "badge-partial")">
+                                    @checkedCount/@totalCount
+                                </span>
+                            }
+                        </td>
+                        <td @onclick:stopPropagation style="display:flex;gap:6px;padding:8px 16px">
+                            <button class="btn btn-ghost btn-sm" @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>Edit</button>
+                            <button class="btn btn-danger btn-sm" @onclick='() => DeleteItem(item)'>✕</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    List<CollectionItemDto>? items;
+    List<string> platforms = [];
+    string searchTerm = "", filterType = "", filterPlatform = "", filterRegion = "", filterCondition = "", sortBy = "name";
+    bool descending = false;
+
+    protected override async Task OnInitializedAsync() => await LoadItems();
+
+    async Task LoadItems()
+    {
+        var url = BuildUrl();
+        items = await Http.GetFromJsonAsync<List<CollectionItemDto>>(url) ?? [];
+        platforms = items.Select(i => i.Platform).Where(p => !string.IsNullOrEmpty(p)).Distinct().OrderBy(p => p).ToList();
+    }
+
+    string BuildUrl()
+    {
+        var q = new List<string> { "status=Owned" };
+        if (!string.IsNullOrWhiteSpace(searchTerm))    q.Add($"search={Uri.EscapeDataString(searchTerm)}");
+        if (!string.IsNullOrWhiteSpace(filterType))    q.Add($"type={filterType}");
+        if (!string.IsNullOrWhiteSpace(filterPlatform)) q.Add($"platform={Uri.EscapeDataString(filterPlatform)}");
+        if (!string.IsNullOrWhiteSpace(filterRegion))  q.Add($"region={filterRegion}");
+        if (!string.IsNullOrWhiteSpace(filterCondition)) q.Add($"condition={filterCondition}");
+        q.Add($"sortBy={sortBy}&desc={descending.ToString().ToLower()}");
+        return "api/items?" + string.Join("&", q);
+    }
+
+    async Task OnFilterChanged() => await LoadItems();
+    void ToggleSort() { descending = !descending; _ = LoadItems(); }
+
+    async Task DeleteItem(CollectionItemDto item)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", $"Delete \"{item.Name}\"?")) return;
+        await Http.DeleteAsync($"api/items/{item.Id}");
+        await LoadItems();
+    }
+
+    static string FormatPrice(decimal? v) => v.HasValue ? $"€{v:F2}" : "—";
+}

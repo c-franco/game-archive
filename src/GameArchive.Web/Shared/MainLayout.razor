@@ -1,0 +1,36 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="app-shell">
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">◈</span>
+            <span class="brand-name">GameArchive</span>
+        </div>
+
+        <div class="nav-section">
+            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                <span class="nav-icon">⊞</span>
+                <span>Collection</span>
+            </NavLink>
+            <NavLink class="nav-link" href="/wishlist">
+                <span class="nav-icon">♡</span>
+                <span>Wishlist</span>
+            </NavLink>
+            <NavLink class="nav-link" href="/dashboard">
+                <span class="nav-icon">◎</span>
+                <span>Dashboard</span>
+            </NavLink>
+            <NavLink class="nav-link" href="/settings">
+                <span class="nav-icon">⚙</span>
+                <span>Settings</span>
+            </NavLink>
+        </div>
+
+        <div class="sidebar-footer">v1.0.0</div>
+    </nav>
+
+    <main class="main-content">
+        @Body
+    </main>
+</div>

@@ -1,0 +1,87 @@
+@page "/dashboard"
+@inject HttpClient Http
+
+<PageTitle>Dashboard — GameArchive</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">◎ Dashboard</div>
+        <div class="page-subtitle">Your collection at a glance</div>
+    </div>
+    <div style="display:flex;gap:8px">
+        <a href="api/export/csv" class="btn btn-secondary" target="_blank">↓ CSV</a>
+        <a href="api/export/json" class="btn btn-secondary" target="_blank">↓ JSON</a>
+    </div>
+</div>
+
+@if (stats == null)
+{
+    <div class="spinner-center"><div class="spinner"></div></div>
+}
+else
+{
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">@stats.TotalItems</div>
+            <div class="stat-label">Total Items</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@stats.TotalOwned</div>
+            <div class="stat-label">Owned</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@stats.TotalWishlist</div>
+            <div class="stat-label">Wishlist</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">€@stats.TotalEstimatedValue.ToString("F0")</div>
+            <div class="stat-label">Est. Value</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">€@stats.TotalSpent.ToString("F0")</div>
+            <div class="stat-label">Total Spent</div>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+            <div style="font-weight:600;margin-bottom:16px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">By Type</div>
+            @foreach (var kv in stats.ByType.OrderByDescending(x => x.Value))
+            {
+                var pct = stats.TotalItems > 0 ? (kv.Value * 100.0 / stats.TotalItems) : 0;
+                <div style="margin-bottom:14px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.875rem">
+                        <span>@kv.Key</span>
+                        <span style="color:var(--text-2)">@kv.Value</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" style="width:@pct.ToString("F0")%"></div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="card">
+            <div style="font-weight:600;margin-bottom:16px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">By Platform (Top 8)</div>
+            @foreach (var kv in stats.ByPlatform.OrderByDescending(x => x.Value).Take(8))
+            {
+                var pct = stats.TotalItems > 0 ? (kv.Value * 100.0 / stats.TotalItems) : 0;
+                <div style="margin-bottom:14px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.875rem">
+                        <span>@kv.Key</span>
+                        <span style="color:var(--text-2)">@kv.Value</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill green" style="width:@pct.ToString("F0")%"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    StatsDto? stats;
+    protected override async Task OnInitializedAsync()
+        => stats = await Http.GetFromJsonAsync<StatsDto>("api/stats");
+}
