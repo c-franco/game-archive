@@ -3,11 +3,9 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<PageTitle>Wishlist — GameArchive</PageTitle>
-
 <div class="page-header">
     <div>
-        <div class="page-title">♡ Wishlist</div>
+        <div class="page-title">Wishlist</div>
         <div class="page-subtitle">@(items?.Count ?? 0) items you want</div>
     </div>
     <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>
