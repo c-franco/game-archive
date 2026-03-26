@@ -108,8 +108,8 @@ else
                             }
                         </td>
                         <td @onclick:stopPropagation style="display:flex;gap:6px;padding:8px 16px">
-                            <button class="btn btn-ghost btn-sm" @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>Edit</button>
-                            <button class="btn btn-danger btn-sm" @onclick='() => DeleteItem(item)'>✕</button>
+                            <button class="btn btn-secondary btn-sm" @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>✎</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteItem(item)">✕</button>
                         </td>
                     </tr>
                 }
