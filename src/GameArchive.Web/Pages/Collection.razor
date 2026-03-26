@@ -5,47 +5,49 @@
 
 <div class="page-header">
     <div>
-        <div class="page-title">Collection</div>
-        <div class="page-subtitle">@(items?.Count ?? 0) items</div>
+        <div class="page-title">Colección</div>
+        <div class="page-subtitle">
+            @(items?.Count ?? 0) @( (items?.Count ?? 0) == 1 ? "artículo" : "artículos")
+        </div>
     </div>
     <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>
-        + Add Item
+        + Añadir artículo
     </button>
 </div>
 
 <div class="filters-bar">
-    <input class="search-input" placeholder="Search by name…" @bind="searchTerm" @bind:event="oninput" @bind:after="OnFilterChanged" />
+    <input class="search-input" placeholder="Buscar por nombre…" @bind="searchTerm" @bind:event="oninput" @bind:after="OnFilterChanged" />
     <select @bind="filterType" @bind:after="OnFilterChanged">
-        <option value="">All Types</option>
-        <option value="Game">Game</option>
-        <option value="Console">Console</option>
+        <option value="">Todos los tipos</option>
+        <option value="Game">Juego</option>
+        <option value="Console">Consola</option>
     </select>
     <select @bind="filterPlatform" @bind:after="OnFilterChanged">
-        <option value="">All Platforms</option>
+        <option value="">Todas las plataformas</option>
         @foreach (var p in platforms)
         {
             <option value="@p">@p</option>
         }
     </select>
     <select @bind="filterRegion" @bind:after="OnFilterChanged">
-        <option value="">All Regions</option>
+        <option value="">Todas las regiones</option>
         <option value="PAL">PAL</option>
         <option value="NTSC-U">NTSC-U</option>
         <option value="NTSC-J">NTSC-J</option>
         <option value="NTSC">NTSC</option>
     </select>
     <select @bind="filterCondition" @bind:after="OnFilterChanged">
-        <option value="">All Conditions</option>
-        <option value="New">New</option>
-        <option value="Good">Good</option>
-        <option value="Fair">Fair</option>
-        <option value="Poor">Poor</option>
+        <option value="">Todos los estados</option>
+        <option value="New">Nuevo</option>
+        <option value="Good">Bueno</option>
+        <option value="Fair">Regular</option>
+        <option value="Poor">Malo</option>
     </select>
     <select @bind="sortBy" @bind:after="OnFilterChanged">
-        <option value="name">Sort: Name</option>
-        <option value="date">Sort: Date</option>
-        <option value="price">Sort: Price</option>
-        <option value="value">Sort: Value</option>
+        <option value="name">Ordenar: Nombre</option>
+        <option value="date">Ordenar: Fecha</option>
+        <option value="price">Ordenar: Precio</option>
+        <option value="value">Ordenar: Valor</option>
     </select>
     <button class="btn btn-secondary btn-sm" @onclick="ToggleSort">
         @(descending ? "↓ Desc" : "↑ Asc")
@@ -61,9 +63,9 @@ else if (!items.Any())
     <div class="card">
         <div class="empty-state">
             <div class="empty-icon">◈</div>
-            <div class="empty-title">No items found</div>
-            <div class="empty-desc">Add your first game or console to get started.</div>
-            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>+ Add Item</button>
+            <div class="empty-title">No se encontraron elementos</div>
+            <div class="empty-desc">Añade tu primer juego o consola para empezar.</div>
+            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>+ Añadir elemento</button>
         </div>
     </div>
 }
@@ -73,13 +75,13 @@ else
         <table>
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Platform</th>
-                    <th>Region</th>
-                    <th>Condition</th>
-                    <th>Paid</th>
-                    <th>Value</th>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Plataforma</th>
+                    <th>Región</th>
+                    <th>Estado</th>
+                    <th>Pagado</th>
+                    <th>Valor</th>
                     <th>Checklist</th>
                     <th></th>
                 </tr>
@@ -92,11 +94,13 @@ else
                     <tr @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>
                         <td class="td-name">@item.Name</td>
                         <td>
-                            <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">@item.Type</span>
+                            <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">
+                                @(item.Type == "Game" ? "Juego" : "Consola")
+                            </span>
                         </td>
                         <td class="td-muted">@item.Platform</td>
                         <td class="td-muted">@item.Region</td>
-                        <td class="td-muted">@item.Condition</td>
+                        <td class="td-muted">@TranslateCondition(item.Condition)</td>
                         <td class="td-muted">@FormatPrice(item.PurchasePrice)</td>
                         <td class="td-muted">@FormatPrice(item.EstimatedValue)</td>
                         <td>
@@ -136,10 +140,10 @@ else
     string BuildUrl()
     {
         var q = new List<string> { "status=Owned" };
-        if (!string.IsNullOrWhiteSpace(searchTerm))    q.Add($"search={Uri.EscapeDataString(searchTerm)}");
-        if (!string.IsNullOrWhiteSpace(filterType))    q.Add($"type={filterType}");
-        if (!string.IsNullOrWhiteSpace(filterPlatform)) q.Add($"platform={Uri.EscapeDataString(filterPlatform)}");
-        if (!string.IsNullOrWhiteSpace(filterRegion))  q.Add($"region={filterRegion}");
+        if (!string.IsNullOrWhiteSpace(searchTerm))      q.Add($"search={Uri.EscapeDataString(searchTerm)}");
+        if (!string.IsNullOrWhiteSpace(filterType))      q.Add($"type={filterType}");
+        if (!string.IsNullOrWhiteSpace(filterPlatform))  q.Add($"platform={Uri.EscapeDataString(filterPlatform)}");
+        if (!string.IsNullOrWhiteSpace(filterRegion))    q.Add($"region={filterRegion}");
         if (!string.IsNullOrWhiteSpace(filterCondition)) q.Add($"condition={filterCondition}");
         q.Add($"sortBy={sortBy}&desc={descending.ToString().ToLower()}");
         return "api/items?" + string.Join("&", q);
@@ -150,10 +154,19 @@ else
 
     async Task DeleteItem(CollectionItemDto item)
     {
-        if (!await JS.InvokeAsync<bool>("confirm", $"Delete \"{item.Name}\"?")) return;
+        if (!await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{item.Name}\"?")) return;
         await Http.DeleteAsync($"api/items/{item.Id}");
         await LoadItems();
     }
 
     static string FormatPrice(decimal? v) => v.HasValue ? $"€{v:F2}" : "—";
+
+    static string TranslateCondition(string c) => c switch
+    {
+        "New"  => "Nuevo",
+        "Good" => "Bueno",
+        "Fair" => "Regular",
+        "Poor" => "Malo",
+        _      => c
+    };
 }

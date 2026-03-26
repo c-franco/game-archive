@@ -5,20 +5,22 @@
 
 <div class="page-header">
     <div>
-        <div class="page-title">Wishlist</div>
-        <div class="page-subtitle">@(items?.Count ?? 0) items you want</div>
+        <div class="page-title">Lista de deseos</div>
+        <div class="page-subtitle">
+            @(items?.Count ?? 0) @( (items?.Count ?? 0) == 1 ? "artículo" : "artículos")
+        </div>
     </div>
     <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>
-        + Add to Wishlist
+        + Añadir a la lista
     </button>
 </div>
 
 <div class="filters-bar">
-    <input class="search-input" placeholder="Search wishlist…" @bind="searchTerm" @bind:event="oninput" @bind:after="LoadItems" />
+    <input class="search-input" placeholder="Buscar en la lista…" @bind="searchTerm" @bind:event="oninput" @bind:after="LoadItems" />
     <select @bind="filterType" @bind:after="LoadItems">
-        <option value="">All Types</option>
-        <option value="Game">Game</option>
-        <option value="Console">Console</option>
+        <option value="">Todos los tipos</option>
+        <option value="Game">Juego</option>
+        <option value="Console">Consola</option>
     </select>
 </div>
 
@@ -31,9 +33,9 @@ else if (!items.Any())
     <div class="card">
         <div class="empty-state">
             <div class="empty-icon">♡</div>
-            <div class="empty-title">Wishlist is empty</div>
-            <div class="empty-desc">Track games and consoles you're hunting for.</div>
-            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>+ Add to Wishlist</button>
+            <div class="empty-title">La lista de deseos está vacía</div>
+            <div class="empty-desc">Registra los juegos y consolas que estás buscando.</div>
+            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>+ Añadir a la lista</button>
         </div>
     </div>
 }
@@ -44,7 +46,9 @@ else
         {
             <div class="wish-card" @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>
                 <div style="display:flex;justify-content:space-between;align-items:flex-start">
-                    <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">@item.Type</span>
+                    <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">
+                        @(item.Type == "Game" ? "Juego" : "Consola")
+                    </span>
                     <button class="btn btn-danger btn-sm" @onclick:stopPropagation @onclick="() => DeleteItem(item)">✕</button>
                 </div>
                 <div class="wish-card-title">@item.Name</div>
@@ -59,7 +63,7 @@ else
                 }
                 <div style="margin-top:14px">
                     <button class="btn btn-secondary btn-sm" @onclick:stopPropagation @onclick="() => MarkOwned(item)">
-                        ✓ Mark as Owned
+                        ✓ Marcar como adquirido
                     </button>
                 </div>
             </div>
@@ -89,7 +93,7 @@ else
 
     async Task DeleteItem(CollectionItemDto item)
     {
-        if (!await JS.InvokeAsync<bool>("confirm", $"Remove \"{item.Name}\" from wishlist?")) return;
+        if (!await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{item.Name}\" de la lista de deseos?")) return;
         await Http.DeleteAsync($"api/items/{item.Id}");
         await LoadItems();
     }

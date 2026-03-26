@@ -6,10 +6,10 @@
 
 <div class="page-header">
     <div>
-        <div class="page-title">@(IsNew ? "New Item" : model.Name)</div>
-        <div class="page-subtitle">@(IsNew ? "Add to your collection" : "Edit details")</div>
+        <div class="page-title">@(IsNew ? "Nuevo elemento" : model.Name)</div>
+        <div class="page-subtitle">@(IsNew ? "Añadir a tu colección" : "Editar detalles")</div>
     </div>
-    <button class="btn btn-ghost" @onclick="() => Nav.NavigateTo(BackUrl)">← Back</button>
+    <button class="btn btn-ghost" @onclick="() => Nav.NavigateTo(BackUrl)">← Volver</button>
 </div>
 
 @if (loading)
@@ -29,77 +29,77 @@ else
 
     <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start">
 
-        <!-- Main form -->
+        <!-- Formulario principal -->
         <div class="card">
             <div class="form-grid">
 
                 <div class="form-group span-2">
-                    <label>Name *</label>
-                    <input @bind="model.Name" placeholder="e.g. The Legend of Zelda: Ocarina of Time" />
+                    <label>Nombre *</label>
+                    <input @bind="model.Name" placeholder="p.ej. The Legend of Zelda: Ocarina of Time" />
                 </div>
 
                 <div class="form-group">
-                    <label>Type *</label>
+                    <label>Tipo *</label>
                     <select @bind="model.Type" @bind:after="OnTypeChanged">
-                        <option value="Game">Game</option>
-                        <option value="Console">Console</option>
+                        <option value="Game">Juego</option>
+                        <option value="Console">Consola</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Status</label>
+                    <label>Estado</label>
                     <select @bind="model.Status">
-                        <option value="Owned">Owned</option>
-                        <option value="Wishlist">Wishlist</option>
+                        <option value="Owned">Adquirido</option>
+                        <option value="Wishlist">Lista de deseos</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Platform</label>
-                    <input @bind="model.Platform" placeholder="e.g. SNES, Nintendo 64, PS1…" />
+                    <label>Plataforma</label>
+                    <input @bind="model.Platform" placeholder="p.ej. SNES, Nintendo 64, PS1…" />
                 </div>
 
                 <div class="form-group">
-                    <label>Region</label>
+                    <label>Región</label>
                     <select @bind="model.Region">
-                        <option value="">— Select —</option>
+                        <option value="">— Seleccionar —</option>
                         <option value="PAL">PAL</option>
                         <option value="NTSC-U">NTSC-U</option>
                         <option value="NTSC-J">NTSC-J</option>
                         <option value="NTSC">NTSC</option>
-                        <option value="Unknown">Unknown</option>
+                        <option value="Unknown">Desconocida</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Condition</label>
+                    <label>Condición</label>
                     <select @bind="model.Condition">
-                        <option value="">— Select —</option>
-                        <option value="New">New</option>
-                        <option value="Good">Good</option>
-                        <option value="Fair">Fair</option>
-                        <option value="Poor">Poor</option>
+                        <option value="">— Seleccionar —</option>
+                        <option value="New">Nuevo</option>
+                        <option value="Good">Bueno</option>
+                        <option value="Fair">Regular</option>
+                        <option value="Poor">Malo</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Purchase Date</label>
+                    <label>Fecha de compra</label>
                     <input type="date" @bind="model.PurchaseDate" />
                 </div>
 
                 <div class="form-group">
-                    <label>Purchase Price (€)</label>
+                    <label>Precio de compra (€)</label>
                     <input type="number" step="0.01" @bind="model.PurchasePrice" placeholder="0.00" />
                 </div>
 
                 <div class="form-group">
-                    <label>Estimated Current Value (€)</label>
+                    <label>Valor estimado actual (€)</label>
                     <input type="number" step="0.01" @bind="model.EstimatedValue" placeholder="0.00" />
                 </div>
 
                 <div class="form-group span-2">
-                    <label>Notes</label>
-                    <textarea @bind="model.Notes" placeholder="Condition details, where you got it, serial number…"></textarea>
+                    <label>Notas</label>
+                    <textarea @bind="model.Notes" placeholder="Detalles de la condición, dónde lo conseguiste, número de serie…"></textarea>
                 </div>
 
             </div>
@@ -109,11 +109,11 @@ else
             <div style="display:flex;justify-content:flex-end;gap:10px">
                 @if (!IsNew)
                 {
-                    <button class="btn btn-danger" @onclick="DeleteItem">Delete Item</button>
+                    <button class="btn btn-danger" @onclick="DeleteItem">Eliminar</button>
                 }
-                <button class="btn btn-secondary" @onclick="() => Nav.NavigateTo(BackUrl)">Cancel</button>
+                <button class="btn btn-secondary" @onclick="() => Nav.NavigateTo(BackUrl)">Cancelar</button>
                 <button class="btn btn-primary" @onclick="Save" disabled="@saving">
-                    @(saving ? "Saving…" : (IsNew ? "Add Item" : "Save Changes"))
+                    @(saving ? "Guardando…" : (IsNew ? "Añadir elemento" : "Guardar cambios"))
                 </button>
             </div>
         </div>
@@ -127,7 +127,7 @@ else
             @if (!model.ChecklistEntries.Any())
             {
                 <div style="color:var(--text-3);font-size:0.875rem;text-align:center;padding:24px 0">
-                    No checklist items.<br/>Configure templates in Settings.
+                    Sin elementos en el checklist.<br/>Configura las plantillas en Ajustes.
                 </div>
             }
             else
@@ -142,7 +142,7 @@ else
                     }
                 </div>
                 <div style="margin-top:12px;font-size:0.8rem;color:var(--text-2)">
-                    @model.ChecklistEntries.Count(e => e.IsChecked) / @model.ChecklistEntries.Count complete
+                    @model.ChecklistEntries.Count(e => e.IsChecked) / @model.ChecklistEntries.Count completados
                 </div>
             }
         </div>
@@ -170,17 +170,17 @@ else
 
             model = new ItemFormModel
             {
-                Id = item.Id,
-                Name = item.Name,
-                Type = item.Type,
-                Platform = item.Platform,
-                Region = item.Region,
-                Condition = item.Condition,
-                PurchasePrice = item.PurchasePrice,
+                Id             = item.Id,
+                Name           = item.Name,
+                Type           = item.Type,
+                Platform       = item.Platform,
+                Region         = item.Region,
+                Condition      = item.Condition,
+                PurchasePrice  = item.PurchasePrice,
                 EstimatedValue = item.EstimatedValue,
-                PurchaseDate = item.PurchaseDate,
-                Notes = item.Notes,
-                Status = item.Status,
+                PurchaseDate   = item.PurchaseDate,
+                Notes          = item.Notes,
+                Status         = item.Status,
                 ChecklistEntries = item.ChecklistEntries
                     .Select(e => new ChecklistEntryForm { Id = e.Id, Label = e.Label, IsChecked = e.IsChecked, SortOrder = e.SortOrder })
                     .ToList()
@@ -212,7 +212,7 @@ else
 
     async Task Save()
     {
-        if (string.IsNullOrWhiteSpace(model.Name)) { errorMsg = "Name is required."; return; }
+        if (string.IsNullOrWhiteSpace(model.Name)) { errorMsg = "El nombre es obligatorio."; return; }
 
         saving = true; errorMsg = ""; successMsg = "";
 
@@ -223,19 +223,6 @@ else
 
         if (IsNew)
         {
-            var cmd = new
-            {
-                model.Name,
-                Type           = Enum.Parse<int_ItemType>(model.Type),
-                model.Platform,
-                model.Region,
-                model.Condition,
-                model.PurchasePrice,
-                model.EstimatedValue,
-                PurchaseDate   = purchaseDate,
-                model.Notes,
-                Status         = Enum.Parse<int_ItemStatus>(model.Status)
-            };
             var resp = await Http.PostAsJsonAsync("api/items", new
             {
                 model.Name,
@@ -256,7 +243,7 @@ else
                 Nav.NavigateTo($"/items/{body!.Id}");
                 return;
             }
-            errorMsg = "Failed to create item.";
+            errorMsg = "Error al crear el elemento.";
         }
         else
         {
@@ -278,8 +265,8 @@ else
                     .ToList()
             });
 
-            if (resp.IsSuccessStatusCode) { successMsg = "Changes saved."; }
-            else errorMsg = "Failed to save changes.";
+            if (resp.IsSuccessStatusCode) { successMsg = "Cambios guardados correctamente."; }
+            else errorMsg = "Error al guardar los cambios.";
         }
 
         saving = false;
@@ -287,14 +274,10 @@ else
 
     async Task DeleteItem()
     {
-        if (!await JS.InvokeAsync<bool>("confirm", $"Permanently delete \"{model.Name}\"?")) return;
+        if (!await JS.InvokeAsync<bool>("confirm", $"¿Eliminar permanentemente \"{model.Name}\"?")) return;
         await Http.DeleteAsync($"api/items/{Id}");
         Nav.NavigateTo(model.Status == "Wishlist" ? "/wishlist" : "/");
     }
-
-    // Dummy enum aliases for anonymous object serialisation (int values match C# enums)
-    enum int_ItemType { Game = 0, Console = 1 }
-    enum int_ItemStatus { Owned = 0, Wishlist = 1 }
 
     record CreateResult(Guid Id);
 }

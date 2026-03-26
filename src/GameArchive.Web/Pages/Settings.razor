@@ -3,13 +3,8 @@
 
 <div class="page-header">
     <div>
-        <div class="page-title">Settings</div>
+        <div class="page-title">Ajustes</div>
     </div>
-</div>
-
-<div style="color:var(--text-2);font-size:0.875rem;margin-bottom:24px;max-width:560px">
-    Templates define the default checklist items added when you create a new Game or Console.
-    Editing or deleting templates here does <strong>not</strong> affect items already in your collection.
 </div>
 
 @if (templates == null)
@@ -20,21 +15,22 @@ else
 {
     @foreach (var itemType in new[] { "Game", "Console" })
     {
+        var label = itemType == "Game" ? "Juego" : "Consola";
         var group = templates.Where(t => t.ItemType == itemType).OrderBy(t => t.SortOrder).ToList();
 
         <div class="card" style="margin-bottom:20px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
                 <div style="font-weight:600;font-size:0.95rem">
-                    <span class="badge @(itemType == "Game" ? "badge-game" : "badge-console")" style="margin-right:8px">@itemType</span>
-                    Checklist Template
+                    <span class="badge @(itemType == "Game" ? "badge-game" : "badge-console")" style="margin-right:8px">@label</span>
+                    Plantilla de checklist
                 </div>
-                <button class="btn btn-secondary btn-sm" @onclick="() => AddTemplate(itemType)">+ Add item</button>
+                <button class="btn btn-secondary btn-sm" @onclick="() => AddTemplate(itemType)">+ Añadir elemento</button>
             </div>
 
             @if (!group.Any())
             {
                 <div style="color:var(--text-3);font-size:0.875rem;padding:12px 0">
-                    No template items. New @itemType items will have an empty checklist.
+                    Sin elementos en la plantilla. Los nuevos elementos de tipo @label tendrán el checklist vacío.
                 </div>
             }
             else
@@ -46,9 +42,9 @@ else
                             <input style="max-width:320px"
                                    value="@t.Label"
                                    @onchange="e => UpdateTemplate(t, e.Value?.ToString() ?? t.Label)"
-                                   placeholder="Label…" />
+                                   placeholder="Etiqueta…" />
 
-                            <input type="number" style="max-width:80px" title="Sort order"
+                            <input type="number" style="max-width:80px" title="Orden"
                                    value="@t.SortOrder"
                                    @onchange="e => UpdateTemplateOrder(t, e.Value?.ToString())" />
 
@@ -81,11 +77,11 @@ else
         await Http.PostAsJsonAsync("api/templates", new
         {
             ItemType  = itemType == "Game" ? 0 : 1,
-            Label     = "New item",
+            Label     = "Nuevo elemento",
             SortOrder = nextOrder
         });
         await LoadTemplates();
-        ShowStatus("Template added.");
+        ShowStatus("Plantilla añadida.");
     }
 
     async Task UpdateTemplate(ChecklistTemplateDto t, string newLabel)
@@ -98,7 +94,7 @@ else
             t.SortOrder
         });
         await LoadTemplates();
-        ShowStatus("Template updated.");
+        ShowStatus("Plantilla actualizada.");
     }
 
     async Task UpdateTemplateOrder(ChecklistTemplateDto t, string? val)
@@ -117,7 +113,7 @@ else
     {
         await Http.DeleteAsync($"api/templates/{id}");
         templates = templates!.Where(t => t.Id != id).ToList();
-        ShowStatus("Template deleted.");
+        ShowStatus("Plantilla eliminada.");
     }
 
     void ShowStatus(string msg)
