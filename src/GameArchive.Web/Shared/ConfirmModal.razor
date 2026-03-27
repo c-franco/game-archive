@@ -1,0 +1,51 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@if (Visible)
+{
+    <div id="confirm-modal-portal">
+        <div class="modal-backdrop" @onclick="OnCancel">
+            <div class="modal-box" @onclick:stopPropagation>
+                <div class="modal-icon-wrap">
+                    <div class="modal-icon">⚠</div>
+                </div>
+                <div class="modal-title">@Title</div>
+                <div class="modal-message">@Message</div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" @onclick="OnCancel">Cancelar</button>
+                    <button class="btn btn-danger-solid" @onclick="OnConfirm">@ConfirmLabel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public string Title { get; set; } = "¿Eliminar artículo?";
+    [Parameter] public string Message { get; set; } = "Esta acción no se puede deshacer.";
+    [Parameter] public string ConfirmLabel { get; set; } = "Eliminar";
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private bool _wasMoved = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible && !_wasMoved)
+        {
+            _wasMoved = true;
+            await JS.InvokeVoidAsync("modalPortal.move", "confirm-modal-portal");
+        }
+        else if (!Visible && _wasMoved)
+        {
+            _wasMoved = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("modalPortal.cleanup", "confirm-modal-portal"); }
+        catch { /* ignore on dispose */ }
+    }
+}

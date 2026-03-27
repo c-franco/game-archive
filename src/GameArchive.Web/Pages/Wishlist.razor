@@ -1,14 +1,28 @@
 @page "/wishlist"
 @inject HttpClient Http
 @inject NavigationManager Nav
-@inject IJSRuntime JS
+
+<!-- Modal de confirmación -->
+@if (itemToDelete != null)
+{
+    <div class="modal-overlay" @onclick="CancelDelete">
+        <div class="modal-box" @onclick:stopPropagation>
+            <div class="modal-title">¿Eliminar artículo?</div>
+            <div class="modal-body">
+                Vas a eliminar <strong>@itemToDelete.Name</strong> de la lista de deseos. Esta acción no se puede deshacer.
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" @onclick="CancelDelete">Cancelar</button>
+                <button class="btn btn-danger" @onclick="ConfirmDelete">Eliminar</button>
+            </div>
+        </div>
+    </div>
+}
 
 <div class="page-header">
     <div>
         <div class="page-title">Lista de deseos</div>
-        <div class="page-subtitle">
-            @(items?.Count ?? 0) @( (items?.Count ?? 0) == 1 ? "artículo" : "artículos")
-        </div>
+        <div class="page-subtitle">@(items?.Count ?? 0) artículos que quieres conseguir</div>
     </div>
     <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>
         + Añadir a la lista
@@ -49,7 +63,7 @@ else
                     <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">
                         @(item.Type == "Game" ? "Juego" : "Consola")
                     </span>
-                    <button class="btn btn-danger btn-sm" @onclick:stopPropagation @onclick="() => DeleteItem(item)">✕</button>
+                    <button class="btn btn-danger btn-sm" @onclick:stopPropagation @onclick="() => AskDelete(item)">✕</button>
                 </div>
                 <div class="wish-card-title">@item.Name</div>
                 <div class="wish-card-meta">@item.Platform · @item.Region</div>
@@ -74,6 +88,7 @@ else
 @code {
     List<CollectionItemDto>? items;
     string searchTerm = "", filterType = "";
+    CollectionItemDto? itemToDelete;
 
     protected override async Task OnInitializedAsync() => await LoadItems();
 
@@ -91,10 +106,14 @@ else
         await LoadItems();
     }
 
-    async Task DeleteItem(CollectionItemDto item)
+    void AskDelete(CollectionItemDto item) => itemToDelete = item;
+    void CancelDelete() => itemToDelete = null;
+
+    async Task ConfirmDelete()
     {
-        if (!await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{item.Name}\" de la lista de deseos?")) return;
-        await Http.DeleteAsync($"api/items/{item.Id}");
+        if (itemToDelete == null) return;
+        await Http.DeleteAsync($"api/items/{itemToDelete.Id}");
+        itemToDelete = null;
         await LoadItems();
     }
 }

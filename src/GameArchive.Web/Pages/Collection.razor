@@ -1,14 +1,28 @@
 @page "/collection"
 @inject HttpClient Http
 @inject NavigationManager Nav
-@inject IJSRuntime JS
+
+<!-- Modal de confirmación -->
+@if (itemToDelete != null)
+{
+    <div class="modal-overlay" @onclick="CancelDelete">
+        <div class="modal-box" @onclick:stopPropagation>
+            <div class="modal-title">¿Eliminar artículo?</div>
+            <div class="modal-body">
+                Vas a eliminar <strong>@itemToDelete.Name</strong>. Esta acción no se puede deshacer.
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" @onclick="CancelDelete">Cancelar</button>
+                <button class="btn btn-danger" @onclick="ConfirmDelete">Eliminar</button>
+            </div>
+        </div>
+    </div>
+}
 
 <div class="page-header">
     <div>
         <div class="page-title">Colección</div>
-        <div class="page-subtitle">
-            @(items?.Count ?? 0) @( (items?.Count ?? 0) == 1 ? "artículo" : "artículos")
-        </div>
+        <div class="page-subtitle">@(items?.Count ?? 0) artículos</div>
     </div>
     <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>
         + Añadir artículo
@@ -63,9 +77,9 @@ else if (!items.Any())
     <div class="card">
         <div class="empty-state">
             <div class="empty-icon">◈</div>
-            <div class="empty-title">No se encontraron elementos</div>
+            <div class="empty-title">No se encontraron artículos</div>
             <div class="empty-desc">Añade tu primer juego o consola para empezar.</div>
-            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>+ Añadir elemento</button>
+        <button class="btn btn-primary" @onclick='() =>Nav.NavigateTo("/items/new")'>+ Añadir artículo </button>
         </div>
     </div>
 }
@@ -90,7 +104,7 @@ else
                 @foreach (var item in items)
                 {
                     var checkedCount = item.ChecklistEntries.Count(e => e.IsChecked);
-                    var totalCount = item.ChecklistEntries.Count;
+                    var totalCount   = item.ChecklistEntries.Count;
                     <tr @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>
                         <td class="td-name">@item.Name</td>
                         <td>
@@ -113,7 +127,7 @@ else
                         </td>
                         <td @onclick:stopPropagation style="display:flex;gap:6px;padding:8px 16px">
                             <button class="btn btn-secondary btn-sm" @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>✎</button>
-                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteItem(item)">✕</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => AskDelete(item)">✕</button>
                         </td>
                     </tr>
                 }
@@ -127,6 +141,8 @@ else
     List<string> platforms = [];
     string searchTerm = "", filterType = "", filterPlatform = "", filterRegion = "", filterCondition = "", sortBy = "name";
     bool descending = false;
+
+    CollectionItemDto? itemToDelete;
 
     protected override async Task OnInitializedAsync() => await LoadItems();
 
@@ -152,10 +168,14 @@ else
     async Task OnFilterChanged() => await LoadItems();
     void ToggleSort() { descending = !descending; _ = LoadItems(); }
 
-    async Task DeleteItem(CollectionItemDto item)
+    void AskDelete(CollectionItemDto item) => itemToDelete = item;
+    void CancelDelete() => itemToDelete = null;
+
+    async Task ConfirmDelete()
     {
-        if (!await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{item.Name}\"?")) return;
-        await Http.DeleteAsync($"api/items/{item.Id}");
+        if (itemToDelete == null) return;
+        await Http.DeleteAsync($"api/items/{itemToDelete.Id}");
+        itemToDelete = null;
         await LoadItems();
     }
 

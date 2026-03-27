@@ -24,13 +24,13 @@ else
                     <span class="badge @(itemType == "Game" ? "badge-game" : "badge-console")" style="margin-right:8px">@label</span>
                     Plantilla de checklist
                 </div>
-                <button class="btn btn-secondary btn-sm" @onclick="() => AddTemplate(itemType)">+ Añadir elemento</button>
+                <button class="btn btn-secondary btn-sm" @onclick="() => AddTemplate(itemType)">+ Añadir artículo</button>
             </div>
 
             @if (!group.Any())
             {
                 <div style="color:var(--text-3);font-size:0.875rem;padding:12px 0">
-                    Sin elementos en la plantilla. Los nuevos elementos de tipo @label tendrán el checklist vacío.
+                    Sin artículos en la plantilla. Los nuevos artículos de tipo @label tendrán el checklist vacío.
                 </div>
             }
             else
@@ -77,7 +77,7 @@ else
         await Http.PostAsJsonAsync("api/templates", new
         {
             ItemType  = itemType == "Game" ? 0 : 1,
-            Label     = "Nuevo elemento",
+            Label = "Nuevo artículo",
             SortOrder = nextOrder
         });
         await LoadTemplates();
