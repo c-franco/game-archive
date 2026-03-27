@@ -88,6 +88,18 @@ else
         }
     </div>
 
+    <!-- ── Exportar datos ─────────────────────────────────────────────────── -->
+    <div class="card" style="margin-bottom:20px">
+        <div style="font-weight:600;font-size:0.95rem;margin-bottom:8px">Exportar datos</div>
+        <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:16px">
+            Descarga toda tu colección en el formato que prefieras.
+        </p>
+        <div style="display:flex;gap:10px">
+            <a href="api/export/csv" class="btn btn-secondary" target="_blank">↓ Exportar CSV</a>
+            <a href="api/export/json" class="btn btn-secondary" target="_blank">↓ Exportar JSON</a>
+        </div>
+    </div>
+
     @if (!string.IsNullOrEmpty(statusMsg))
     {
         <div class="alert alert-success">@statusMsg</div>
