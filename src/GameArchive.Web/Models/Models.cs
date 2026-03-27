@@ -20,6 +20,8 @@ public record ChecklistEntryDto(Guid Id, string Label, bool IsChecked, int SortO
 
 public record ChecklistTemplateDto(Guid Id, string ItemType, string Label, int SortOrder);
 
+public record PlatformDto(Guid Id, string Name, int SortOrder);
+
 public record StatsDto(
     int TotalItems,
     int TotalOwned,
@@ -36,8 +38,8 @@ public class ItemFormModel
     public string Name { get; set; } = "";
     public string Type { get; set; } = "Game";
     public string Platform { get; set; } = "";
-    public string Region { get; set; } = "PAL";
-    public string Condition { get; set; } = "Good";
+    public string Region { get; set; } = "";
+    public string Condition { get; set; } = "";
     public decimal? PurchasePrice { get; set; }
     public decimal? EstimatedValue { get; set; }
     public DateTime? PurchaseDate { get; set; }

@@ -7,12 +7,13 @@
     </div>
 </div>
 
-@if (templates == null)
+@if (templates == null || platforms == null)
 {
     <div class="spinner-center"><div class="spinner"></div></div>
 }
 else
 {
+    <!-- ── Checklist templates ─────────────────────────────────────────────── -->
     @foreach (var itemType in new[] { "Game", "Console" })
     {
         var label = itemType == "Game" ? "Juego" : "Consola";
@@ -43,11 +44,9 @@ else
                                    value="@t.Label"
                                    @onchange="e => UpdateTemplate(t, e.Value?.ToString() ?? t.Label)"
                                    placeholder="Etiqueta…" />
-
                             <input type="number" style="max-width:80px" title="Orden"
                                    value="@t.SortOrder"
                                    @onchange="e => UpdateTemplateOrder(t, e.Value?.ToString())" />
-
                             <button class="btn btn-danger btn-sm" @onclick="() => DeleteTemplate(t.Id)">✕</button>
                         </div>
                     }
@@ -55,6 +54,39 @@ else
             }
         </div>
     }
+
+    <!-- ── Platforms ──────────────────────────────────────────────────────── -->
+    <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="font-weight:600;font-size:0.95rem">Plataformas</div>
+            <button class="btn btn-secondary btn-sm" @onclick="AddPlatform">+ Añadir plataforma</button>
+        </div>
+
+        @if (!platforms.Any())
+        {
+            <div style="color:var(--text-3);font-size:0.875rem;padding:12px 0">
+                Sin plataformas configuradas. Añade al menos una para poder seleccionarla al crear artículos.
+            </div>
+        }
+        else
+        {
+            <div style="display:flex;flex-direction:column;gap:8px">
+                @foreach (var p in platforms.OrderBy(p => p.SortOrder))
+                {
+                    <div style="display:flex;gap:10px;align-items:center">
+                        <input style="max-width:320px"
+                               value="@p.Name"
+                               @onchange="e => UpdatePlatform(p, e.Value?.ToString() ?? p.Name)"
+                               placeholder="Nombre de la plataforma…" />
+                        <input type="number" style="max-width:80px" title="Orden"
+                               value="@p.SortOrder"
+                               @onchange="e => UpdatePlatformOrder(p, e.Value?.ToString())" />
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeletePlatform(p.Id)">✕</button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
 
     @if (!string.IsNullOrEmpty(statusMsg))
     {
@@ -64,9 +96,15 @@ else
 
 @code {
     List<ChecklistTemplateDto>? templates;
+    List<PlatformDto>?          platforms;
     string statusMsg = "";
 
-    protected override async Task OnInitializedAsync() => await LoadTemplates();
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadTemplates(), LoadPlatforms());
+    }
+
+    // ── Checklist templates ───────────────────────────────────────────────────
 
     async Task LoadTemplates()
         => templates = await Http.GetFromJsonAsync<List<ChecklistTemplateDto>>("api/templates") ?? [];
@@ -77,7 +115,7 @@ else
         await Http.PostAsJsonAsync("api/templates", new
         {
             ItemType  = itemType == "Game" ? 0 : 1,
-            Label = "Nuevo artículo",
+            Label     = "Nuevo artículo",
             SortOrder = nextOrder
         });
         await LoadTemplates();
@@ -115,6 +153,43 @@ else
         templates = templates!.Where(t => t.Id != id).ToList();
         ShowStatus("Plantilla eliminada.");
     }
+
+    // ── Platforms ─────────────────────────────────────────────────────────────
+
+    async Task LoadPlatforms()
+        => platforms = await Http.GetFromJsonAsync<List<PlatformDto>>("api/platforms") ?? [];
+
+    async Task AddPlatform()
+    {
+        var nextOrder = platforms!.Select(p => p.SortOrder).DefaultIfEmpty(0).Max() + 1;
+        await Http.PostAsJsonAsync("api/platforms", new { Name = "Nueva plataforma", SortOrder = nextOrder });
+        await LoadPlatforms();
+        ShowStatus("Plataforma añadida.");
+    }
+
+    async Task UpdatePlatform(PlatformDto p, string newName)
+    {
+        if (string.IsNullOrWhiteSpace(newName) || newName == p.Name) return;
+        await Http.PutAsJsonAsync($"api/platforms/{p.Id}", new { Name = newName, p.SortOrder });
+        await LoadPlatforms();
+        ShowStatus("Plataforma actualizada.");
+    }
+
+    async Task UpdatePlatformOrder(PlatformDto p, string? val)
+    {
+        if (!int.TryParse(val, out var order) || order == p.SortOrder) return;
+        await Http.PutAsJsonAsync($"api/platforms/{p.Id}", new { p.Name, SortOrder = order });
+        await LoadPlatforms();
+    }
+
+    async Task DeletePlatform(Guid id)
+    {
+        await Http.DeleteAsync($"api/platforms/{id}");
+        platforms = platforms!.Where(p => p.Id != id).ToList();
+        ShowStatus("Plataforma eliminada.");
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     void ShowStatus(string msg)
     {

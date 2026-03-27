@@ -84,11 +84,15 @@ else
                 <!-- Plataforma -->
                 <div class="form-group">
                     <label>Plataforma *</label>
-                    <input class="@(errors.ContainsKey("Platform") ? "input-error" : "")"
-                           @bind="model.Platform"
-                           @bind:event="oninput"
-                           @onblur='() => ValidateField("Platform")'
-                           placeholder="p.ej. SNES, Nintendo 64, PS1…" />
+                    <select class="@(errors.ContainsKey("Platform") ? "input-error" : "")"
+                            @bind="model.Platform"
+                            @bind:after='() => ValidateField("Platform")'>
+                        <option value="">— Seleccionar —</option>
+                        @foreach (var p in availablePlatforms)
+                        {
+                            <option value="@p.Name">@p.Name</option>
+                        }
+                    </select>
                     @if (errors.TryGetValue("Platform", out var ePlatform))
                     {
                         <span class="field-error">@ePlatform</span>
@@ -241,8 +245,9 @@ else
     string errorMsg = "", successMsg = "";
     string BackUrl => model.Status == "Wishlist" ? "/wishlist" : "/collection";
 
-    ItemFormModel model = new();
-    Dictionary<string, string> errors = new();
+    ItemFormModel      model              = new();
+    List<PlatformDto>  availablePlatforms = [];
+    Dictionary<string, string> errors     = new();
 
     // ── Validation ────────────────────────────────────────────────────────────
 
@@ -261,7 +266,7 @@ else
 
             case "Platform":
                 if (string.IsNullOrWhiteSpace(model.Platform))
-                    errors["Platform"] = "La plataforma es obligatoria.";
+                    errors["Platform"] = "Selecciona una plataforma.";
                 break;
 
             case "Region":
@@ -306,9 +311,17 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        // Load platforms and item data in parallel when editing
+        var platformsTask = Http.GetFromJsonAsync<List<PlatformDto>>("api/platforms");
+
         if (!IsNew)
         {
-            var item = await Http.GetFromJsonAsync<CollectionItemDto>($"api/items/{Id}");
+            var itemTask = Http.GetFromJsonAsync<CollectionItemDto>($"api/items/{Id}");
+            await Task.WhenAll(platformsTask, itemTask);
+
+            availablePlatforms = platformsTask.Result ?? [];
+
+            var item = itemTask.Result;
             if (item == null) { Nav.NavigateTo("/"); return; }
 
             model = new ItemFormModel
@@ -331,7 +344,9 @@ else
         }
         else
         {
+            availablePlatforms = await platformsTask ?? [];
             if (Wishlist) model.Status = "Wishlist";
+            // Platform, Region and Condition start empty — user must pick one
             await LoadChecklistTemplate();
         }
 
