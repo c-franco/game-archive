@@ -468,6 +468,19 @@ td {
     padding: 64px;
 }
 
+/* ── Field validation ──────────────────────────────────────────────────────── */
+.input-error {
+    border-color: var(--red) !important;
+    box-shadow: 0 0 0 3px var(--red-dim) !important;
+}
+
+.field-error {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--red);
+    margin-top: 3px;
+}
+
 /* ── Wishlist cards ────────────────────────────────────────────────────────── */
 .wishlist-grid {
     display: grid;

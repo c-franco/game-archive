@@ -34,13 +34,13 @@
 }
 else
 {
-    @if (!string.IsNullOrEmpty(errorMsg))
-    {
-        <div class="alert alert-error">@errorMsg</div>
-    }
     @if (!string.IsNullOrEmpty(successMsg))
     {
         <div class="alert alert-success">@successMsg</div>
+    }
+    @if (!string.IsNullOrEmpty(errorMsg))
+    {
+        <div class="alert alert-error">@errorMsg</div>
     }
 
     <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start">
@@ -49,11 +49,21 @@ else
         <div class="card">
             <div class="form-grid">
 
+                <!-- Nombre -->
                 <div class="form-group span-2">
                     <label>Nombre *</label>
-                    <input @bind="model.Name" placeholder="p.ej. The Legend of Zelda: Ocarina of Time" />
+                    <input class="@(errors.ContainsKey("Name") ? "input-error" : "")"
+                           @bind="model.Name"
+                           @bind:event="oninput"
+                           @onblur='() => ValidateField("Name")'
+                           placeholder="p.ej. The Legend of Zelda: Ocarina of Time" />
+                    @if (errors.TryGetValue("Name", out var eName))
+                    {
+                        <span class="field-error">@eName</span>
+                    }
                 </div>
 
+                <!-- Tipo -->
                 <div class="form-group">
                     <label>Tipo *</label>
                     <select @bind="model.Type" @bind:after="OnTypeChanged">
@@ -62,22 +72,35 @@ else
                     </select>
                 </div>
 
+                <!-- Estado -->
                 <div class="form-group">
-                    <label>Estado</label>
+                    <label>Estado *</label>
                     <select @bind="model.Status">
                         <option value="Owned">Adquirido</option>
                         <option value="Wishlist">Lista de deseos</option>
                     </select>
                 </div>
 
+                <!-- Plataforma -->
                 <div class="form-group">
-                    <label>Plataforma</label>
-                    <input @bind="model.Platform" placeholder="p.ej. SNES, Nintendo 64, PS1…" />
+                    <label>Plataforma *</label>
+                    <input class="@(errors.ContainsKey("Platform") ? "input-error" : "")"
+                           @bind="model.Platform"
+                           @bind:event="oninput"
+                           @onblur='() => ValidateField("Platform")'
+                           placeholder="p.ej. SNES, Nintendo 64, PS1…" />
+                    @if (errors.TryGetValue("Platform", out var ePlatform))
+                    {
+                        <span class="field-error">@ePlatform</span>
+                    }
                 </div>
 
+                <!-- Región -->
                 <div class="form-group">
-                    <label>Región</label>
-                    <select @bind="model.Region">
+                    <label>Región *</label>
+                    <select class="@(errors.ContainsKey("Region") ? "input-error" : "")"
+                            @bind="model.Region"
+                            @bind:after='() => ValidateField("Region")'>
                         <option value="">— Seleccionar —</option>
                         <option value="PAL">PAL</option>
                         <option value="NTSC-U">NTSC-U</option>
@@ -85,37 +108,79 @@ else
                         <option value="NTSC">NTSC</option>
                         <option value="Unknown">Desconocida</option>
                     </select>
+                    @if (errors.TryGetValue("Region", out var eRegion))
+                    {
+                        <span class="field-error">@eRegion</span>
+                    }
                 </div>
 
+                <!-- Condición -->
                 <div class="form-group">
-                    <label>Condición</label>
-                    <select @bind="model.Condition">
+                    <label>Condición *</label>
+                    <select class="@(errors.ContainsKey("Condition") ? "input-error" : "")"
+                            @bind="model.Condition"
+                            @bind:after='() => ValidateField("Condition")'>
                         <option value="">— Seleccionar —</option>
                         <option value="New">Nuevo</option>
                         <option value="Good">Bueno</option>
                         <option value="Fair">Regular</option>
                         <option value="Poor">Malo</option>
                     </select>
+                    @if (errors.TryGetValue("Condition", out var eCondition))
+                    {
+                        <span class="field-error">@eCondition</span>
+                    }
                 </div>
 
+                <!-- Fecha de compra -->
                 <div class="form-group">
-                    <label>Fecha de compra</label>
-                    <input type="date" @bind="model.PurchaseDate" />
+                    <label>Fecha de compra *</label>
+                    <input type="date"
+                           class="@(errors.ContainsKey("PurchaseDate") ? "input-error" : "")"
+                           @bind="model.PurchaseDate"
+                           @bind:after='() => ValidateField("PurchaseDate")'
+                           max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    @if (errors.TryGetValue("PurchaseDate", out var eDate))
+                    {
+                        <span class="field-error">@eDate</span>
+                    }
                 </div>
 
+                <!-- Precio de compra -->
                 <div class="form-group">
-                    <label>Precio de compra (€)</label>
-                    <input type="number" step="0.01" @bind="model.PurchasePrice" placeholder="0.00" />
+                    <label>Precio de compra (€) *</label>
+                    <input type="number" step="0.01" min="0"
+                           class="@(errors.ContainsKey("PurchasePrice") ? "input-error" : "")"
+                           @bind="model.PurchasePrice"
+                           @bind:event="oninput"
+                           @onblur='() => ValidateField("PurchasePrice")'
+                           placeholder="0.00" />
+                    @if (errors.TryGetValue("PurchasePrice", out var ePrice))
+                    {
+                        <span class="field-error">@ePrice</span>
+                    }
                 </div>
 
+                <!-- Valor estimado (opcional) -->
                 <div class="form-group">
                     <label>Valor estimado actual (€)</label>
-                    <input type="number" step="0.01" @bind="model.EstimatedValue" placeholder="0.00" />
+                    <input type="number" step="0.01" min="0"
+                           class="@(errors.ContainsKey("EstimatedValue") ? "input-error" : "")"
+                           @bind="model.EstimatedValue"
+                           @bind:event="oninput"
+                           @onblur='() => ValidateField("EstimatedValue")'
+                           placeholder="0.00" />
+                    @if (errors.TryGetValue("EstimatedValue", out var eValue))
+                    {
+                        <span class="field-error">@eValue</span>
+                    }
                 </div>
 
+                <!-- Notas (opcional) -->
                 <div class="form-group span-2">
                     <label>Notas</label>
-                    <textarea @bind="model.Notes" placeholder="Detalles de la condición, dónde lo conseguiste, número de serie…"></textarea>
+                    <textarea @bind="model.Notes"
+                              placeholder="Detalles de la condición, dónde lo conseguiste, número de serie…"></textarea>
                 </div>
 
             </div>
@@ -177,6 +242,67 @@ else
     string BackUrl => model.Status == "Wishlist" ? "/wishlist" : "/collection";
 
     ItemFormModel model = new();
+    Dictionary<string, string> errors = new();
+
+    // ── Validation ────────────────────────────────────────────────────────────
+
+    void ValidateField(string field)
+    {
+        errors.Remove(field);
+
+        switch (field)
+        {
+            case "Name":
+                if (string.IsNullOrWhiteSpace(model.Name))
+                    errors["Name"] = "El nombre es obligatorio.";
+                else if (model.Name.Trim().Length > 200)
+                    errors["Name"] = "El nombre no puede superar los 200 caracteres.";
+                break;
+
+            case "Platform":
+                if (string.IsNullOrWhiteSpace(model.Platform))
+                    errors["Platform"] = "La plataforma es obligatoria.";
+                break;
+
+            case "Region":
+                if (string.IsNullOrWhiteSpace(model.Region))
+                    errors["Region"] = "Selecciona una región.";
+                break;
+
+            case "Condition":
+                if (string.IsNullOrWhiteSpace(model.Condition))
+                    errors["Condition"] = "Selecciona una condición.";
+                break;
+
+            case "PurchaseDate":
+                if (!model.PurchaseDate.HasValue)
+                    errors["PurchaseDate"] = "La fecha de compra es obligatoria.";
+                else if (model.PurchaseDate.Value.Date > DateTime.Today)
+                    errors["PurchaseDate"] = "La fecha de compra no puede ser futura.";
+                break;
+
+            case "PurchasePrice":
+                if (!model.PurchasePrice.HasValue)
+                    errors["PurchasePrice"] = "El precio de compra es obligatorio.";
+                else if (model.PurchasePrice.Value < 0)
+                    errors["PurchasePrice"] = "El precio no puede ser negativo.";
+                break;
+
+            case "EstimatedValue":
+                if (model.EstimatedValue.HasValue && model.EstimatedValue.Value < 0)
+                    errors["EstimatedValue"] = "El valor estimado no puede ser negativo.";
+                break;
+        }
+    }
+
+    bool ValidateAll()
+    {
+        foreach (var field in new[] { "Name", "Platform", "Region", "Condition", "PurchaseDate", "PurchasePrice", "EstimatedValue" })
+            ValidateField(field);
+        return errors.Count == 0;
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override async Task OnInitializedAsync()
     {
@@ -227,15 +353,22 @@ else
         if (IsNew) await LoadChecklistTemplate();
     }
 
+    // ── Save ──────────────────────────────────────────────────────────────────
+
     async Task Save()
     {
-        if (string.IsNullOrWhiteSpace(model.Name)) { errorMsg = "El nombre es obligatorio."; return; }
+        successMsg = "";
+        errorMsg   = "";
 
-        saving = true; errorMsg = ""; successMsg = "";
+        if (!ValidateAll())
+        {
+            errorMsg = "Corrige los errores antes de guardar.";
+            return;
+        }
 
-        DateOnly? purchaseDate = null;
-        if (model.PurchaseDate.HasValue)
-            purchaseDate = DateOnly.FromDateTime(model.PurchaseDate.Value);
+        saving = true;
+
+        var purchaseDate = DateOnly.FromDateTime(model.PurchaseDate!.Value);
 
         if (IsNew)
         {
@@ -282,10 +415,10 @@ else
                     .ToList()
             });
 
-            if (resp.IsSuccessStatusCode) { successMsg = "Cambios guardados correctamente."; }
-            else errorMsg = "Error al guardar los cambios.";
-
             saving = false;
+
+            if (resp.IsSuccessStatusCode) successMsg = "Cambios guardados correctamente.";
+            else errorMsg = "Error al guardar los cambios.";
         }
     }
 
