@@ -174,7 +174,7 @@ else
     bool loading = true, saving = false;
     bool showDeleteModal = false;
     string errorMsg = "", successMsg = "";
-    string BackUrl => model.Status == "Wishlist" ? "/wishlist" : "/";
+    string BackUrl => model.Status == "Wishlist" ? "/wishlist" : "/collection";
 
     ItemFormModel model = new();
 
@@ -234,7 +234,6 @@ else
         saving = true; errorMsg = ""; successMsg = "";
 
         DateOnly? purchaseDate = null;
-
         if (model.PurchaseDate.HasValue)
             purchaseDate = DateOnly.FromDateTime(model.PurchaseDate.Value);
 
@@ -254,10 +253,11 @@ else
                 Status         = model.Status == "Owned" ? 0 : 1
             });
 
+            saving = false;
+
             if (resp.IsSuccessStatusCode)
             {
-                var body = await resp.Content.ReadFromJsonAsync<CreateResult>();
-                Nav.NavigateTo($"/items/{body!.Id}");
+                Nav.NavigateTo(model.Status == "Wishlist" ? "/wishlist" : "/collection");
                 return;
             }
             errorMsg = "Error al crear el artículo.";
@@ -284,9 +284,9 @@ else
 
             if (resp.IsSuccessStatusCode) { successMsg = "Cambios guardados correctamente."; }
             else errorMsg = "Error al guardar los cambios.";
-        }
 
-        saving = false;
+            saving = false;
+        }
     }
 
     async Task ConfirmDelete()
