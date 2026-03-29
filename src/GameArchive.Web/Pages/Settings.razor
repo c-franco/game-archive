@@ -7,7 +7,7 @@
     </div>
 </div>
 
-@if (templates == null || platforms == null)
+@if (localTemplates == null || platformsText == null)
 {
     <div class="spinner-center"><div class="spinner"></div></div>
 }
@@ -21,7 +21,7 @@ else
             <a href="api/export/csv"  class="btn btn-secondary" target="_blank">Exportar CSV</a>
             <a href="api/export/json" class="btn btn-secondary" target="_blank">Exportar JSON</a>
 
-            <div style="width:1px;height:24px;background:var(--border);flex-shrink:0"></div>
+            <div style="width:2px;height:34px;background:var(--border);flex-shrink:0;margin:0 10px"></div>
 
             <label class="btn btn-secondary" style="cursor:pointer;text-transform:none;letter-spacing:normal">
                 Importar CSV
@@ -110,7 +110,7 @@ else
         }
     </div>
 
-    <!-- ── Platforms — textarea one-per-line ─────────────────────────────── -->
+    <!-- ── Platforms ─────────────────────────────────────────────────────── -->
     <div class="card" style="margin-bottom:20px">
         <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">Plataformas</div>
         <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">
@@ -137,11 +137,9 @@ else
 }
 
 @code {
-    List<ChecklistTemplateDto>? templates;
-    List<PlatformDto>?          platforms;
-
-    List<TemplateRow> localTemplates = [];
-    string            platformsText  = "";
+    // Local state — null means "still loading"
+    List<TemplateRow>? localTemplates = null;
+    string?            platformsText  = null;
 
     bool   saving    = false;
     string saveMsg   = "";
@@ -150,111 +148,104 @@ else
     bool             importing    = false;
     ImportResultDto? importResult = null;
 
+    // ── Load — 1 HTTP request ─────────────────────────────────────────────────
+
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(LoadTemplates(), LoadPlatforms());
-        BuildLocalState();
+        var settings = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
+        if (settings is null) return;
+        BuildLocalState(settings);
     }
 
-    void BuildLocalState()
+    void BuildLocalState(SettingsDto s)
     {
-        localTemplates = templates!
-            .Select(t => new TemplateRow { Id = t.Id, ItemType = t.ItemType, Label = t.Label, SortOrder = t.SortOrder, IsNew = false })
+        localTemplates = s.Templates
+            .Select(t => new TemplateRow
+            {
+                Id       = t.Id,
+                ItemType = t.ItemType,
+                Label    = t.Label,
+                SortOrder = t.SortOrder,
+                IsNew    = false
+            })
             .ToList();
 
-        platformsText = string.Join("\n", platforms!.OrderBy(p => p.SortOrder).Select(p => p.Name));
+        platformsText = string.Join("\n", s.Platforms.OrderBy(p => p.SortOrder).Select(p => p.Name));
     }
 
     List<TemplateRow> GetTemplateGroup(string itemType)
-        => localTemplates.Where(t => t.ItemType == itemType).OrderBy(t => t.SortOrder).ToList();
+        => localTemplates!.Where(t => t.ItemType == itemType).OrderBy(t => t.SortOrder).ToList();
 
     void AddTemplateRow(string itemType)
     {
-        var nextOrder = localTemplates.Where(t => t.ItemType == itemType).Select(t => t.SortOrder).DefaultIfEmpty(0).Max() + 1;
-        localTemplates.Add(new TemplateRow { Id = Guid.NewGuid(), ItemType = itemType, Label = "", SortOrder = nextOrder, IsNew = true });
+        var nextOrder = localTemplates!
+            .Where(t => t.ItemType == itemType)
+            .Select(t => t.SortOrder)
+            .DefaultIfEmpty(0).Max() + 1;
+
+        localTemplates!.Add(new TemplateRow
+        {
+            Id        = Guid.NewGuid(),
+            ItemType  = itemType,
+            Label     = "",
+            SortOrder = nextOrder,
+            IsNew     = true
+        });
     }
 
-    void RemoveTemplateRow(TemplateRow t) => localTemplates.Remove(t);
+    void RemoveTemplateRow(TemplateRow t) => localTemplates!.Remove(t);
+
+    // ── Save — 1 HTTP request ─────────────────────────────────────────────────
 
     async Task SaveAll()
     {
         saving = true; saveMsg = ""; saveError = false;
-        var errors = new List<string>();
 
-        // ── Templates ─────────────────────────────────────────────────────────
-        var serverTemplates = await Http.GetFromJsonAsync<List<ChecklistTemplateDto>>("api/templates") ?? [];
-        var localIds = localTemplates.Where(t => !t.IsNew).Select(t => t.Id).ToHashSet();
-
-        foreach (var st in serverTemplates.Where(st => !localIds.Contains(st.Id)))
-        {
-            var r = await Http.DeleteAsync($"api/templates/{st.Id}");
-            if (!r.IsSuccessStatusCode) errors.Add($"Error al eliminar plantilla '{st.Label}'.");
-        }
-
-        foreach (var t in localTemplates)
-        {
-            if (string.IsNullOrWhiteSpace(t.Label)) continue;
-
-            if (t.IsNew)
-            {
-                var r = await Http.PostAsJsonAsync("api/templates", new
-                {
-                    ItemType  = t.ItemType == "Game" ? 0 : 1,
-                    Label     = t.Label,
-                    SortOrder = t.SortOrder
-                });
-                if (r.IsSuccessStatusCode) t.IsNew = false;
-                else errors.Add($"Error al crear plantilla '{t.Label}'.");
-            }
-            else
-            {
-                var original = serverTemplates.FirstOrDefault(st => st.Id == t.Id);
-                if (original is null || (original.Label == t.Label && original.SortOrder == t.SortOrder)) continue;
-
-                var r = await Http.PutAsJsonAsync($"api/templates/{t.Id}", new
-                {
-                    ItemType  = t.ItemType == "Game" ? 0 : 1,
-                    Label     = t.Label,
-                    SortOrder = t.SortOrder
-                });
-                if (!r.IsSuccessStatusCode) errors.Add($"Error al actualizar plantilla '{t.Label}'.");
-            }
-        }
-
-        // ── Platforms ─────────────────────────────────────────────────────────
-        var newNames = platformsText
+        var platforms = platformsText!
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(s => s.Trim())
             .Where(s => s.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select((name, i) => new { Name = name, SortOrder = i + 1 })
             .ToList();
 
-        var serverPlatforms = await Http.GetFromJsonAsync<List<PlatformDto>>("api/platforms") ?? [];
-
-        foreach (var sp in serverPlatforms.Where(sp => !newNames.Any(n => n.Equals(sp.Name, StringComparison.OrdinalIgnoreCase))))
-            await Http.DeleteAsync($"api/platforms/{sp.Id}");
-
-        for (int i = 0; i < newNames.Count; i++)
+        var payload = new
         {
-            var name     = newNames[i];
-            var order    = i + 1;
-            var existing = serverPlatforms.FirstOrDefault(sp => sp.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            Templates = localTemplates!
+                .Where(t => !string.IsNullOrWhiteSpace(t.Label))
+                .Select(t => new
+                {
+                    Id       = t.IsNew ? (Guid?)null : t.Id,
+                    t.ItemType,
+                    t.Label,
+                    t.SortOrder
+                })
+                .ToList(),
+            Platforms = platforms
+        };
 
-            if (existing is null)
-                await Http.PostAsJsonAsync("api/platforms", new { Name = name, SortOrder = order });
-            else if (existing.SortOrder != order)
-                await Http.PutAsJsonAsync($"api/platforms/{existing.Id}", new { Name = name, SortOrder = order });
+        var resp = await Http.PutAsJsonAsync("api/settings", payload);
+
+        if (resp.IsSuccessStatusCode)
+        {
+            // Reload canonical state with a single GET
+            var settings = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
+            if (settings is not null) BuildLocalState(settings);
+
+            saveMsg   = "Ajustes guardados correctamente.";
+            saveError = false;
+        }
+        else
+        {
+            saveMsg   = $"Error al guardar los ajustes ({(int)resp.StatusCode}).";
+            saveError = true;
         }
 
-        await Task.WhenAll(LoadTemplates(), LoadPlatforms());
-        BuildLocalState();
-
         saving = false;
-        if (errors.Count == 0) { saveMsg = "Ajustes guardados correctamente."; saveError = false; }
-        else { saveMsg = string.Join(" | ", errors); saveError = true; }
-
         _ = Task.Delay(3000).ContinueWith(_ => { saveMsg = ""; InvokeAsync(StateHasChanged); });
     }
+
+    // ── Import ────────────────────────────────────────────────────────────────
 
     async Task OnFileSelected(InputFileChangeEventArgs e, string format)
     {
@@ -272,11 +263,7 @@ else
         finally { importing = false; }
     }
 
-    async Task LoadTemplates()
-        => templates = await Http.GetFromJsonAsync<List<ChecklistTemplateDto>>("api/templates") ?? [];
-
-    async Task LoadPlatforms()
-        => platforms = await Http.GetFromJsonAsync<List<PlatformDto>>("api/platforms") ?? [];
+    // ── Types ─────────────────────────────────────────────────────────────────
 
     class TemplateRow
     {
@@ -287,5 +274,8 @@ else
         public bool   IsNew     { get; set; }
     }
 
+    record SettingsDto(List<ChecklistTemplateDto> Templates, List<PlatformDto> Platforms);
+    record ChecklistTemplateDto(Guid Id, string ItemType, string Label, int SortOrder);
+    record PlatformDto(Guid Id, string Name, int SortOrder);
     record ImportResultDto(int Created, int Updated, List<string> Errors);
 }
