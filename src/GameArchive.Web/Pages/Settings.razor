@@ -88,16 +88,73 @@ else
         }
     </div>
 
-    <!-- ── Exportar datos ─────────────────────────────────────────────────── -->
+    <!-- ── Importar / Exportar ────────────────────────────────────────────── -->
     <div class="card" style="margin-bottom:20px">
-        <div style="font-weight:600;font-size:0.95rem;margin-bottom:8px">Exportar datos</div>
-        <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:16px">
-            Descarga toda tu colección en el formato que prefieras.
+        <div style="font-weight:600;font-size:0.95rem;margin-bottom:8px">Importar / Exportar datos</div>
+        <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:20px">
+            Exporta tu colección o importa artículos desde un fichero CSV o JSON compatible.
+            La importación actualiza los artículos existentes (por ID) y crea los nuevos.
         </p>
-        <div style="display:flex;gap:10px">
-            <a href="api/export/csv" class="btn btn-secondary" target="_blank">↓ Exportar CSV</a>
-            <a href="api/export/json" class="btn btn-secondary" target="_blank">↓ Exportar JSON</a>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+
+            <!-- Exportar -->
+            <div>
+                <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:10px">Exportar</div>
+                <div style="display:flex;gap:10px">
+                    <a href="api/export/csv"  class="btn btn-secondary" target="_blank">↓ CSV</a>
+                    <a href="api/export/json" class="btn btn-secondary" target="_blank">↓ JSON</a>
+                </div>
+            </div>
+
+            <!-- Importar -->
+            <div>
+                <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:10px">Importar</div>
+                <div style="display:flex;gap:10px">
+                    <label class="btn btn-secondary" style="cursor:pointer">
+                        ↑ CSV
+                        <InputFile OnChange='e => OnFileSelected(e, "csv")' accept=".csv" style="display:none"" />
+                    </label>
+                    <label class="btn btn-secondary" style="cursor:pointer">
+                        ↑ JSON
+                        <InputFile OnChange='e => OnFileSelected(e, "json")' accept=".json" style="display:none" />
+                    </label>
+                </div>
+            </div>
         </div>
+
+        <!-- Import progress / result -->
+        @if (importing)
+        {
+            <div style="margin-top:16px;display:flex;align-items:center;gap:10px;color:var(--text-2);font-size:0.875rem">
+                <div class="spinner" style="width:18px;height:18px;border-width:2px"></div>
+                Importando…
+            </div>
+        }
+
+        @if (importResult != null)
+        {
+            <div style="margin-top:16px">
+                @if (importResult.Errors.Count == 0)
+                {
+                    <div class="alert alert-success">
+                        Importación completada — @importResult.Created creado(s), @importResult.Updated actualizado(s).
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-error" style="margin-bottom:8px">
+                        Importación con errores — @importResult.Created creado(s), @importResult.Updated actualizado(s).
+                    </div>
+                    <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:0.8rem;color:var(--red);display:flex;flex-direction:column;gap:4px">
+                        @foreach (var err in importResult.Errors)
+                        {
+                            <div>• @err</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
     </div>
 
     @if (!string.IsNullOrEmpty(statusMsg))
@@ -111,9 +168,43 @@ else
     List<PlatformDto>?          platforms;
     string statusMsg = "";
 
+    bool          importing    = false;
+    ImportResultDto? importResult = null;
+
     protected override async Task OnInitializedAsync()
     {
         await Task.WhenAll(LoadTemplates(), LoadPlatforms());
+    }
+
+    // ── Import ────────────────────────────────────────────────────────────────
+
+    async Task OnFileSelected(InputFileChangeEventArgs e, string format)
+    {
+        importResult = null;
+        importing    = true;
+        StateHasChanged();
+
+        try
+        {
+            var file    = e.File;
+            var content = new MultipartFormDataContent();
+            var stream  = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            content.Add(new StreamContent(stream), "file", file.Name);
+
+            var resp = await Http.PostAsync($"api/import/{format}", content);
+            if (resp.IsSuccessStatusCode)
+                importResult = await resp.Content.ReadFromJsonAsync<ImportResultDto>();
+            else
+                importResult = new ImportResultDto(0, 0, [$"Error del servidor: {resp.StatusCode}"]);
+        }
+        catch (Exception ex)
+        {
+            importResult = new ImportResultDto(0, 0, [$"Error inesperado: {ex.Message}"]);
+        }
+        finally
+        {
+            importing = false;
+        }
     }
 
     // ── Checklist templates ───────────────────────────────────────────────────
@@ -208,4 +299,6 @@ else
         statusMsg = msg;
         _ = Task.Delay(2500).ContinueWith(_ => { statusMsg = ""; InvokeAsync(StateHasChanged); });
     }
+
+    record ImportResultDto(int Created, int Updated, List<string> Errors);
 }
