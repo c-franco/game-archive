@@ -3,17 +3,8 @@ using GameArchive.Application.Features.Items.Queries;
 using GameArchive.Infrastructure.Data;
 using GameArchive.Infrastructure.Export;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// ── Logging ──────────────────────────────────────────────────────────────────
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File("logs/gamearchive-.log", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
-
-builder.Host.UseSerilog();
 
 // ── Database ─────────────────────────────────────────────────────────────────
 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "gamearchive.db");
@@ -36,7 +27,6 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "GameArchive API", Version = "v1" });
 });
 
-// Serve Blazor WASM from API project
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
@@ -46,7 +36,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
-    await SeedData.InitializeAsync(db); 
+    await SeedData.InitializeAsync(db);
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────
