@@ -13,120 +13,29 @@
 }
 else
 {
-    <!-- ── Checklist templates ─────────────────────────────────────────────── -->
-    @foreach (var itemType in new[] { "Game", "Console" })
-    {
-        var label = itemType == "Game" ? "Juego" : "Consola";
-        var group = templates.Where(t => t.ItemType == itemType).OrderBy(t => t.SortOrder).ToList();
-
-        <div class="card" style="margin-bottom:20px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-                <div style="font-weight:600;font-size:0.95rem">
-                    <span class="badge @(itemType == "Game" ? "badge-game" : "badge-console")" style="margin-right:8px">@label</span>
-                    Plantilla de checklist
-                </div>
-                <button class="btn btn-secondary btn-sm" @onclick="() => AddTemplate(itemType)">+ Añadir artículo</button>
-            </div>
-
-            @if (!group.Any())
-            {
-                <div style="color:var(--text-3);font-size:0.875rem;padding:12px 0">
-                    Sin artículos en la plantilla. Los nuevos artículos de tipo @label tendrán el checklist vacío.
-                </div>
-            }
-            else
-            {
-                <div style="display:flex;flex-direction:column;gap:8px">
-                    @foreach (var t in group)
-                    {
-                        <div style="display:flex;gap:10px;align-items:center">
-                            <input style="max-width:320px"
-                                   value="@t.Label"
-                                   @onchange="e => UpdateTemplate(t, e.Value?.ToString() ?? t.Label)"
-                                   placeholder="Etiqueta…" />
-                            <input type="number" style="max-width:80px" title="Orden"
-                                   value="@t.SortOrder"
-                                   @onchange="e => UpdateTemplateOrder(t, e.Value?.ToString())" />
-                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteTemplate(t.Id)">✕</button>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-    }
-
-    <!-- ── Platforms ──────────────────────────────────────────────────────── -->
+    <!-- ── Datos ──────────────────────────────────────────────────────────── -->
     <div class="card" style="margin-bottom:20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div style="font-weight:600;font-size:0.95rem">Plataformas</div>
-            <button class="btn btn-secondary btn-sm" @onclick="AddPlatform">+ Añadir plataforma</button>
+        <div style="font-weight:600;font-size:0.95rem;margin-bottom:14px">Datos</div>
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <a href="api/export/csv"  class="btn btn-secondary" target="_blank">Exportar CSV</a>
+            <a href="api/export/json" class="btn btn-secondary" target="_blank">Exportar JSON</a>
+
+            <div style="width:1px;height:24px;background:var(--border);flex-shrink:0"></div>
+
+            <label class="btn btn-secondary" style="cursor:pointer;text-transform:none;letter-spacing:normal">
+                Importar CSV
+                <InputFile OnChange='e => OnFileSelected(e, "csv")' accept=".csv" style="display:none" />
+            </label>
+            <label class="btn btn-secondary" style="cursor:pointer;text-transform:none;letter-spacing:normal">
+                Importar JSON
+                <InputFile OnChange='e => OnFileSelected(e, "json")' accept=".json" style="display:none" />
+            </label>
         </div>
 
-        @if (!platforms.Any())
-        {
-            <div style="color:var(--text-3);font-size:0.875rem;padding:12px 0">
-                Sin plataformas configuradas. Añade al menos una para poder seleccionarla al crear artículos.
-            </div>
-        }
-        else
-        {
-            <div style="display:flex;flex-direction:column;gap:8px">
-                @foreach (var p in platforms.OrderBy(p => p.SortOrder))
-                {
-                    <div style="display:flex;gap:10px;align-items:center">
-                        <input style="max-width:320px"
-                               value="@p.Name"
-                               @onchange="e => UpdatePlatform(p, e.Value?.ToString() ?? p.Name)"
-                               placeholder="Nombre de la plataforma…" />
-                        <input type="number" style="max-width:80px" title="Orden"
-                               value="@p.SortOrder"
-                               @onchange="e => UpdatePlatformOrder(p, e.Value?.ToString())" />
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeletePlatform(p.Id)">✕</button>
-                    </div>
-                }
-            </div>
-        }
-    </div>
-
-    <!-- ── Importar / Exportar ────────────────────────────────────────────── -->
-    <div class="card" style="margin-bottom:20px">
-        <div style="font-weight:600;font-size:0.95rem;margin-bottom:8px">Importar / Exportar datos</div>
-        <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:20px">
-            Exporta tu colección o importa artículos desde un fichero CSV o JSON compatible.
-            La importación actualiza los artículos existentes (por ID) y crea los nuevos.
-        </p>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-
-            <!-- Exportar -->
-            <div>
-                <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:10px">Exportar</div>
-                <div style="display:flex;gap:10px">
-                    <a href="api/export/csv"  class="btn btn-secondary" target="_blank">↓ CSV</a>
-                    <a href="api/export/json" class="btn btn-secondary" target="_blank">↓ JSON</a>
-                </div>
-            </div>
-
-            <!-- Importar -->
-            <div>
-                <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:10px">Importar</div>
-                <div style="display:flex;gap:10px">
-                    <label class="btn btn-secondary" style="cursor:pointer">
-                        ↑ CSV
-                        <InputFile OnChange='e => OnFileSelected(e, "csv")' accept=".csv" style="display:none"" />
-                    </label>
-                    <label class="btn btn-secondary" style="cursor:pointer">
-                        ↑ JSON
-                        <InputFile OnChange='e => OnFileSelected(e, "json")' accept=".json" style="display:none" />
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Import progress / result -->
         @if (importing)
         {
-            <div style="margin-top:16px;display:flex;align-items:center;gap:10px;color:var(--text-2);font-size:0.875rem">
+            <div style="margin-top:14px;display:flex;align-items:center;gap:10px;color:var(--text-2);font-size:0.875rem">
                 <div class="spinner" style="width:18px;height:18px;border-width:2px"></div>
                 Importando…
             </div>
@@ -134,7 +43,7 @@ else
 
         @if (importResult != null)
         {
-            <div style="margin-top:16px">
+            <div style="margin-top:14px">
                 @if (importResult.Errors.Count == 0)
                 {
                     <div class="alert alert-success">
@@ -157,147 +66,225 @@ else
         }
     </div>
 
-    @if (!string.IsNullOrEmpty(statusMsg))
+    <!-- ── Checklist templates: Console left · Game right ────────────────── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        @foreach (var itemType in new[] { "Console", "Game" })
+        {
+            var label = itemType == "Game" ? "Juego" : "Consola";
+            var group = GetTemplateGroup(itemType);
+
+            <div class="card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                    <div style="font-weight:600;font-size:0.95rem">
+                        <span class="badge @(itemType == "Game" ? "badge-game" : "badge-console")" style="margin-right:8px">@label</span>
+                        Checklist
+                    </div>
+                    <button class="btn btn-secondary btn-sm" @onclick="() => AddTemplateRow(itemType)">+ Añadir</button>
+                </div>
+
+                @if (!group.Any())
+                {
+                    <div style="color:var(--text-3);font-size:0.875rem;padding:12px 0">
+                        Sin artículos. Los nuevos @label.ToLower()s tendrán el checklist vacío.
+                    </div>
+                }
+                else
+                {
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                        @foreach (var t in group)
+                        {
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <input value="@t.Label"
+                                       @onchange="e => t.Label = e.Value?.ToString() ?? t.Label"
+                                       placeholder="Etiqueta…" />
+                                <input type="number" style="max-width:64px;flex-shrink:0" title="Orden"
+                                       value="@t.SortOrder"
+                                       @onchange="e => { if (int.TryParse(e.Value?.ToString(), out var o)) t.SortOrder = o; }" />
+                                <button class="btn btn-danger btn-sm" style="flex-shrink:0"
+                                        @onclick="() => RemoveTemplateRow(t)">✕</button>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- ── Platforms — textarea one-per-line ─────────────────────────────── -->
+    <div class="card" style="margin-bottom:20px">
+        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">Plataformas</div>
+        <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">
+            Una plataforma por línea.
+        </div>
+        <textarea style="min-height:220px;font-family:'Space Mono',monospace;font-size:0.85rem;resize:vertical"
+                  @bind="platformsText"
+                  placeholder="Nintendo 64&#10;SNES&#10;PlayStation&#10;…"></textarea>
+    </div>
+
+    <!-- ── Save ──────────────────────────────────────────────────────────── -->
+    <hr class="divider" />
+
+    @if (!string.IsNullOrEmpty(saveMsg))
     {
-        <div class="alert alert-success">@statusMsg</div>
+        <div class="alert @(saveError ? "alert-error" : "alert-success")" style="margin-bottom:16px">@saveMsg</div>
     }
+
+    <div style="padding-bottom:32px">
+        <button class="btn btn-save" @onclick="SaveAll" disabled="@saving">
+            @(saving ? "Guardando…" : "Guardar ajustes")
+        </button>
+    </div>
 }
 
 @code {
     List<ChecklistTemplateDto>? templates;
     List<PlatformDto>?          platforms;
-    string statusMsg = "";
 
-    bool          importing    = false;
+    List<TemplateRow> localTemplates = [];
+    string            platformsText  = "";
+
+    bool   saving    = false;
+    string saveMsg   = "";
+    bool   saveError = false;
+
+    bool             importing    = false;
     ImportResultDto? importResult = null;
 
     protected override async Task OnInitializedAsync()
     {
         await Task.WhenAll(LoadTemplates(), LoadPlatforms());
+        BuildLocalState();
     }
 
-    // ── Import ────────────────────────────────────────────────────────────────
+    void BuildLocalState()
+    {
+        localTemplates = templates!
+            .Select(t => new TemplateRow { Id = t.Id, ItemType = t.ItemType, Label = t.Label, SortOrder = t.SortOrder, IsNew = false })
+            .ToList();
+
+        platformsText = string.Join("\n", platforms!.OrderBy(p => p.SortOrder).Select(p => p.Name));
+    }
+
+    List<TemplateRow> GetTemplateGroup(string itemType)
+        => localTemplates.Where(t => t.ItemType == itemType).OrderBy(t => t.SortOrder).ToList();
+
+    void AddTemplateRow(string itemType)
+    {
+        var nextOrder = localTemplates.Where(t => t.ItemType == itemType).Select(t => t.SortOrder).DefaultIfEmpty(0).Max() + 1;
+        localTemplates.Add(new TemplateRow { Id = Guid.NewGuid(), ItemType = itemType, Label = "", SortOrder = nextOrder, IsNew = true });
+    }
+
+    void RemoveTemplateRow(TemplateRow t) => localTemplates.Remove(t);
+
+    async Task SaveAll()
+    {
+        saving = true; saveMsg = ""; saveError = false;
+        var errors = new List<string>();
+
+        // ── Templates ─────────────────────────────────────────────────────────
+        var serverTemplates = await Http.GetFromJsonAsync<List<ChecklistTemplateDto>>("api/templates") ?? [];
+        var localIds = localTemplates.Where(t => !t.IsNew).Select(t => t.Id).ToHashSet();
+
+        foreach (var st in serverTemplates.Where(st => !localIds.Contains(st.Id)))
+        {
+            var r = await Http.DeleteAsync($"api/templates/{st.Id}");
+            if (!r.IsSuccessStatusCode) errors.Add($"Error al eliminar plantilla '{st.Label}'.");
+        }
+
+        foreach (var t in localTemplates)
+        {
+            if (string.IsNullOrWhiteSpace(t.Label)) continue;
+
+            if (t.IsNew)
+            {
+                var r = await Http.PostAsJsonAsync("api/templates", new
+                {
+                    ItemType  = t.ItemType == "Game" ? 0 : 1,
+                    Label     = t.Label,
+                    SortOrder = t.SortOrder
+                });
+                if (r.IsSuccessStatusCode) t.IsNew = false;
+                else errors.Add($"Error al crear plantilla '{t.Label}'.");
+            }
+            else
+            {
+                var original = serverTemplates.FirstOrDefault(st => st.Id == t.Id);
+                if (original is null || (original.Label == t.Label && original.SortOrder == t.SortOrder)) continue;
+
+                var r = await Http.PutAsJsonAsync($"api/templates/{t.Id}", new
+                {
+                    ItemType  = t.ItemType == "Game" ? 0 : 1,
+                    Label     = t.Label,
+                    SortOrder = t.SortOrder
+                });
+                if (!r.IsSuccessStatusCode) errors.Add($"Error al actualizar plantilla '{t.Label}'.");
+            }
+        }
+
+        // ── Platforms ─────────────────────────────────────────────────────────
+        var newNames = platformsText
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .Where(s => s.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var serverPlatforms = await Http.GetFromJsonAsync<List<PlatformDto>>("api/platforms") ?? [];
+
+        foreach (var sp in serverPlatforms.Where(sp => !newNames.Any(n => n.Equals(sp.Name, StringComparison.OrdinalIgnoreCase))))
+            await Http.DeleteAsync($"api/platforms/{sp.Id}");
+
+        for (int i = 0; i < newNames.Count; i++)
+        {
+            var name     = newNames[i];
+            var order    = i + 1;
+            var existing = serverPlatforms.FirstOrDefault(sp => sp.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+            if (existing is null)
+                await Http.PostAsJsonAsync("api/platforms", new { Name = name, SortOrder = order });
+            else if (existing.SortOrder != order)
+                await Http.PutAsJsonAsync($"api/platforms/{existing.Id}", new { Name = name, SortOrder = order });
+        }
+
+        await Task.WhenAll(LoadTemplates(), LoadPlatforms());
+        BuildLocalState();
+
+        saving = false;
+        if (errors.Count == 0) { saveMsg = "Ajustes guardados correctamente."; saveError = false; }
+        else { saveMsg = string.Join(" | ", errors); saveError = true; }
+
+        _ = Task.Delay(3000).ContinueWith(_ => { saveMsg = ""; InvokeAsync(StateHasChanged); });
+    }
 
     async Task OnFileSelected(InputFileChangeEventArgs e, string format)
     {
-        importResult = null;
-        importing    = true;
-        StateHasChanged();
-
+        importResult = null; importing = true; StateHasChanged();
         try
         {
-            var file    = e.File;
             var content = new MultipartFormDataContent();
-            var stream  = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            content.Add(new StreamContent(stream), "file", file.Name);
-
+            content.Add(new StreamContent(e.File.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)), "file", e.File.Name);
             var resp = await Http.PostAsync($"api/import/{format}", content);
-            if (resp.IsSuccessStatusCode)
-                importResult = await resp.Content.ReadFromJsonAsync<ImportResultDto>();
-            else
-                importResult = new ImportResultDto(0, 0, [$"Error del servidor: {resp.StatusCode}"]);
+            importResult = resp.IsSuccessStatusCode
+                ? await resp.Content.ReadFromJsonAsync<ImportResultDto>()
+                : new ImportResultDto(0, 0, [$"Error del servidor: {resp.StatusCode}"]);
         }
-        catch (Exception ex)
-        {
-            importResult = new ImportResultDto(0, 0, [$"Error inesperado: {ex.Message}"]);
-        }
-        finally
-        {
-            importing = false;
-        }
+        catch (Exception ex) { importResult = new ImportResultDto(0, 0, [$"Error inesperado: {ex.Message}"]); }
+        finally { importing = false; }
     }
-
-    // ── Checklist templates ───────────────────────────────────────────────────
 
     async Task LoadTemplates()
         => templates = await Http.GetFromJsonAsync<List<ChecklistTemplateDto>>("api/templates") ?? [];
 
-    async Task AddTemplate(string itemType)
-    {
-        var nextOrder = templates!.Where(t => t.ItemType == itemType).Select(t => t.SortOrder).DefaultIfEmpty(0).Max() + 1;
-        await Http.PostAsJsonAsync("api/templates", new
-        {
-            ItemType  = itemType == "Game" ? 0 : 1,
-            Label     = "Nuevo artículo",
-            SortOrder = nextOrder
-        });
-        await LoadTemplates();
-        ShowStatus("Plantilla añadida.");
-    }
-
-    async Task UpdateTemplate(ChecklistTemplateDto t, string newLabel)
-    {
-        if (newLabel == t.Label) return;
-        await Http.PutAsJsonAsync($"api/templates/{t.Id}", new
-        {
-            ItemType  = t.ItemType == "Game" ? 0 : 1,
-            Label     = newLabel,
-            t.SortOrder
-        });
-        await LoadTemplates();
-        ShowStatus("Plantilla actualizada.");
-    }
-
-    async Task UpdateTemplateOrder(ChecklistTemplateDto t, string? val)
-    {
-        if (!int.TryParse(val, out var order) || order == t.SortOrder) return;
-        await Http.PutAsJsonAsync($"api/templates/{t.Id}", new
-        {
-            ItemType  = t.ItemType == "Game" ? 0 : 1,
-            t.Label,
-            SortOrder = order
-        });
-        await LoadTemplates();
-    }
-
-    async Task DeleteTemplate(Guid id)
-    {
-        await Http.DeleteAsync($"api/templates/{id}");
-        templates = templates!.Where(t => t.Id != id).ToList();
-        ShowStatus("Plantilla eliminada.");
-    }
-
-    // ── Platforms ─────────────────────────────────────────────────────────────
-
     async Task LoadPlatforms()
         => platforms = await Http.GetFromJsonAsync<List<PlatformDto>>("api/platforms") ?? [];
 
-    async Task AddPlatform()
+    class TemplateRow
     {
-        var nextOrder = platforms!.Select(p => p.SortOrder).DefaultIfEmpty(0).Max() + 1;
-        await Http.PostAsJsonAsync("api/platforms", new { Name = "Nueva plataforma", SortOrder = nextOrder });
-        await LoadPlatforms();
-        ShowStatus("Plataforma añadida.");
-    }
-
-    async Task UpdatePlatform(PlatformDto p, string newName)
-    {
-        if (string.IsNullOrWhiteSpace(newName) || newName == p.Name) return;
-        await Http.PutAsJsonAsync($"api/platforms/{p.Id}", new { Name = newName, p.SortOrder });
-        await LoadPlatforms();
-        ShowStatus("Plataforma actualizada.");
-    }
-
-    async Task UpdatePlatformOrder(PlatformDto p, string? val)
-    {
-        if (!int.TryParse(val, out var order) || order == p.SortOrder) return;
-        await Http.PutAsJsonAsync($"api/platforms/{p.Id}", new { p.Name, SortOrder = order });
-        await LoadPlatforms();
-    }
-
-    async Task DeletePlatform(Guid id)
-    {
-        await Http.DeleteAsync($"api/platforms/{id}");
-        platforms = platforms!.Where(p => p.Id != id).ToList();
-        ShowStatus("Plataforma eliminada.");
-    }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    void ShowStatus(string msg)
-    {
-        statusMsg = msg;
-        _ = Task.Delay(2500).ContinueWith(_ => { statusMsg = ""; InvokeAsync(StateHasChanged); });
+        public Guid   Id        { get; set; }
+        public string ItemType  { get; set; } = "";
+        public string Label     { get; set; } = "";
+        public int    SortOrder { get; set; }
+        public bool   IsNew     { get; set; }
     }
 
     record ImportResultDto(int Created, int Updated, List<string> Errors);

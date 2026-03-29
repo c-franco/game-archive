@@ -505,6 +505,102 @@ td {
 .wish-card-value { color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; margin-top: 12px; }
 .wish-card-notes { color: var(--text-2); font-size: 0.8rem; margin-top: 8px; font-style: italic; }
 
+/* ── Settings ──────────────────────────────────────────────────────────────── */
+
+.settings-section-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-2);
+    margin-bottom: 10px;
+}
+
+.btn-save {
+    background: #00e676;
+    color: #0a0a0a;
+    border-color: #00e676;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 10px 24px;
+    border-radius: var(--radius);
+}
+
+    .btn-save:hover:not(:disabled) {
+        background: #00c853;
+        border-color: #00c853;
+        box-shadow: 0 0 20px rgba(0, 230, 118, 0.35);
+    }
+
+    .btn-save:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+/* ── Platform tags (Settings) ──────────────────────────────────────────────── */
+
+.platform-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 6px 4px 12px;
+    font-size: 0.85rem;
+    color: var(--text);
+    transition: border-color var(--transition);
+}
+
+    .platform-tag:hover {
+        border-color: var(--border-2);
+    }
+
+.platform-tag-label {
+    cursor: default;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.platform-tag-input {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    font-size: 0.85rem;
+    color: var(--text);
+    width: 120px;
+    outline: none;
+}
+
+    .platform-tag-input:focus {
+        border: none;
+        box-shadow: none;
+    }
+
+.platform-tag-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-3);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    transition: background var(--transition), color var(--transition);
+    flex-shrink: 0;
+}
+
+    .platform-tag-remove:hover {
+        background: var(--red-dim);
+        color: var(--red);
+    }
+
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .sidebar { transform: translateX(-100%); }
