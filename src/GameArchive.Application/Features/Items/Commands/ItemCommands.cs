@@ -1,4 +1,5 @@
 using GameArchive.Application.Common;
+using GameArchive.Application.Resources;
 using GameArchive.Domain;
 using GameArchive.Domain.Entities;
 using MediatR;
@@ -27,16 +28,16 @@ public class CreateItemHandler(IAppDbContext db) : IRequestHandler<CreateItemCom
     {
         var item = new CollectionItem
         {
-            Name          = cmd.Name,
-            Type          = cmd.Type,
-            Platform      = cmd.Platform,
-            Region        = cmd.Region,
-            Condition     = cmd.Condition,
-            PurchasePrice = cmd.PurchasePrice,
+            Name           = cmd.Name,
+            Type           = cmd.Type,
+            Platform       = cmd.Platform,
+            Region         = cmd.Region,
+            Condition      = cmd.Condition,
+            PurchasePrice  = cmd.PurchasePrice,
             EstimatedValue = cmd.EstimatedValue,
-            PurchaseDate  = cmd.PurchaseDate,
-            Notes         = cmd.Notes,
-            Status        = cmd.Status
+            PurchaseDate   = cmd.PurchaseDate,
+            Notes          = cmd.Notes,
+            Status         = cmd.Status
         };
 
         var templates = await db.ChecklistTemplates
@@ -83,7 +84,7 @@ public class UpdateItemHandler(IAppDbContext db) : IRequestHandler<UpdateItemCom
         var item = await db.Items
             .Include(i => i.ChecklistEntries)
             .FirstOrDefaultAsync(i => i.Id == cmd.Id, ct)
-            ?? throw new KeyNotFoundException($"Item {cmd.Id} not found");
+            ?? throw new KeyNotFoundException(ServerStrings.Items.NotFoundFmt(cmd.Id));
 
         item.Name           = cmd.Name;
         item.Type           = cmd.Type;
@@ -116,7 +117,7 @@ public class DeleteItemHandler(IAppDbContext db) : IRequestHandler<DeleteItemCom
     public async Task Handle(DeleteItemCommand cmd, CancellationToken ct)
     {
         var item = await db.Items.FindAsync([cmd.Id], ct)
-            ?? throw new KeyNotFoundException($"Item {cmd.Id} not found");
+            ?? throw new KeyNotFoundException(ServerStrings.Items.NotFoundFmt(cmd.Id));
 
         db.Items.Remove(item);
         await db.SaveChangesAsync(ct);
@@ -132,7 +133,7 @@ public class ToggleStatusHandler(IAppDbContext db) : IRequestHandler<ToggleStatu
     public async Task<string> Handle(ToggleStatusCommand cmd, CancellationToken ct)
     {
         var item = await db.Items.FindAsync([cmd.Id], ct)
-            ?? throw new KeyNotFoundException();
+            ?? throw new KeyNotFoundException(ServerStrings.Items.NotFoundFmt(cmd.Id));
 
         item.Status    = item.Status == ItemStatus.Owned ? ItemStatus.Wishlist : ItemStatus.Owned;
         item.UpdatedAt = DateTimeOffset.UtcNow;

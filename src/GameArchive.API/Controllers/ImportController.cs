@@ -1,3 +1,4 @@
+using GameArchive.Application.Resources;
 using GameArchive.Infrastructure.Import;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,7 +13,7 @@ public class ImportController(ImportService import) : ControllerBase
     public async Task<IActionResult> ImportCsv(IFormFile file)
     {
         if (file is null || file.Length == 0)
-            return BadRequest(new { error = "No se ha enviado ningún fichero." });
+            return BadRequest(new { error = ServerStrings.ImportController.ErrNoFileProvided });
 
         await using var stream = file.OpenReadStream();
         var result = await import.ImportCsvAsync(stream);
@@ -24,7 +25,7 @@ public class ImportController(ImportService import) : ControllerBase
     public async Task<IActionResult> ImportJson(IFormFile file)
     {
         if (file is null || file.Length == 0)
-            return BadRequest(new { error = "No se ha enviado ningún fichero." });
+            return BadRequest(new { error = ServerStrings.ImportController.ErrNoFileProvided });
 
         await using var stream = file.OpenReadStream();
         var result = await import.ImportJsonAsync(stream);

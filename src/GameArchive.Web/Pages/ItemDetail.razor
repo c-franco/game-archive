@@ -2,19 +2,24 @@
 @page "/items/{Id:guid}"
 @inject HttpClient Http
 @inject NavigationManager Nav
+@using GameArchive.Web.Resources
 
 <!-- Modal eliminar -->
 @if (showDeleteModal)
 {
     <div class="modal-overlay" @onclick="() => showDeleteModal = false">
         <div class="modal-box" @onclick:stopPropagation>
-            <div class="modal-title">¿Eliminar artículo?</div>
+            <div class="modal-title">@AppStrings.Modal.DeleteTitle</div>
             <div class="modal-body">
                 Vas a eliminar <strong>@model.Name</strong>. Esta acción no se puede deshacer.
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" @onclick="() => showDeleteModal = false">Cancelar</button>
-                <button class="btn btn-danger" @onclick="ConfirmDelete">Eliminar</button>
+                <button class="btn btn-secondary" @onclick="() => showDeleteModal = false">
+                    @AppStrings.Modal.CancelLabel
+                </button>
+                <button class="btn btn-danger" @onclick="ConfirmDelete">
+                    @AppStrings.Modal.DeleteConfirmLabel
+                </button>
             </div>
         </div>
     </div>
@@ -22,10 +27,12 @@
 
 <div class="page-header">
     <div>
-        <div class="page-title">@(IsNew ? "Nuevo artículo" : model.Name)</div>
-        <div class="page-subtitle">@(IsNew ? "Añadir a tu colección" : "Editar detalles")</div>
+        <div class="page-title">@(IsNew ? AppStrings.ItemDetail.TitleNew : model.Name)</div>
+        <div class="page-subtitle">@(IsNew ? AppStrings.ItemDetail.SubtitleNew : AppStrings.ItemDetail.SubtitleEdit)</div>
     </div>
-    <button class="btn btn-ghost" @onclick="() => Nav.NavigateTo(BackUrl)">← Volver</button>
+    <button class="btn btn-ghost" @onclick="() => Nav.NavigateTo(BackUrl)">
+        @AppStrings.Common.Back
+    </button>
 </div>
 
 @if (loading)
@@ -51,12 +58,12 @@ else
 
                 <!-- Nombre -->
                 <div class="form-group span-2">
-                    <label>Nombre *</label>
+                    <label>@AppStrings.ItemDetail.FieldName</label>
                     <input class="@(errors.ContainsKey("Name") ? "input-error" : "")"
                            @bind="model.Name"
                            @bind:event="oninput"
                            @onblur='() => ValidateField("Name")'
-                           placeholder="p.ej. The Legend of Zelda: Ocarina of Time" />
+                           placeholder="@AppStrings.ItemDetail.NamePlaceholder" />
                     @if (errors.TryGetValue("Name", out var eName))
                     {
                         <span class="field-error">@eName</span>
@@ -65,29 +72,29 @@ else
 
                 <!-- Tipo -->
                 <div class="form-group">
-                    <label>Tipo *</label>
+                    <label>@AppStrings.ItemDetail.FieldType</label>
                     <select @bind="model.Type" @bind:after="OnTypeChanged">
-                        <option value="Game">Juego</option>
-                        <option value="Console">Consola</option>
+                        <option value="Game">@AppStrings.Common.TypeGame</option>
+                        <option value="Console">@AppStrings.Common.TypeConsole</option>
                     </select>
                 </div>
 
                 <!-- Estado -->
                 <div class="form-group">
-                    <label>Estado *</label>
+                    <label>@AppStrings.ItemDetail.FieldStatus</label>
                     <select @bind="model.Status">
-                        <option value="Owned">Adquirido</option>
-                        <option value="Wishlist">Lista de deseos</option>
+                        <option value="Owned">@AppStrings.Common.StatusOwned</option>
+                        <option value="Wishlist">@AppStrings.Common.StatusWishlist</option>
                     </select>
                 </div>
 
                 <!-- Plataforma -->
                 <div class="form-group">
-                    <label>Plataforma *</label>
+                    <label>@AppStrings.ItemDetail.FieldPlatform</label>
                     <select class="@(errors.ContainsKey("Platform") ? "input-error" : "")"
                             @bind="model.Platform"
                             @bind:after='() => ValidateField("Platform")'>
-                        <option value="">— Seleccionar —</option>
+                        <option value="">@AppStrings.Common.SelectPlaceholder</option>
                         @foreach (var p in availablePlatforms)
                         {
                             <option value="@p.Name">@p.Name</option>
@@ -101,16 +108,16 @@ else
 
                 <!-- Región -->
                 <div class="form-group">
-                    <label>Región *</label>
+                    <label>@AppStrings.ItemDetail.FieldRegion</label>
                     <select class="@(errors.ContainsKey("Region") ? "input-error" : "")"
                             @bind="model.Region"
                             @bind:after='() => ValidateField("Region")'>
-                        <option value="">— Seleccionar —</option>
-                        <option value="PAL">PAL</option>
-                        <option value="NTSC-U">NTSC-U</option>
-                        <option value="NTSC-J">NTSC-J</option>
-                        <option value="NTSC">NTSC</option>
-                        <option value="Unknown">Desconocida</option>
+                        <option value="">@AppStrings.Common.SelectPlaceholder</option>
+                        <option value="PAL">@AppStrings.Common.RegionPal</option>
+                        <option value="NTSC-U">@AppStrings.Common.RegionNtscU</option>
+                        <option value="NTSC-J">@AppStrings.Common.RegionNtscJ</option>
+                        <option value="NTSC">@AppStrings.Common.RegionNtsc</option>
+                        <option value="Unknown">@AppStrings.Common.RegionUnknown</option>
                     </select>
                     @if (errors.TryGetValue("Region", out var eRegion))
                     {
@@ -120,15 +127,15 @@ else
 
                 <!-- Condición -->
                 <div class="form-group">
-                    <label>Condición *</label>
+                    <label>@AppStrings.ItemDetail.FieldCondition</label>
                     <select class="@(errors.ContainsKey("Condition") ? "input-error" : "")"
                             @bind="model.Condition"
                             @bind:after='() => ValidateField("Condition")'>
-                        <option value="">— Seleccionar —</option>
-                        <option value="New">Nuevo</option>
-                        <option value="Good">Bueno</option>
-                        <option value="Fair">Regular</option>
-                        <option value="Poor">Malo</option>
+                        <option value="">@AppStrings.Common.SelectPlaceholder</option>
+                        <option value="New">@AppStrings.Common.ConditionNew</option>
+                        <option value="Good">@AppStrings.Common.ConditionGood</option>
+                        <option value="Fair">@AppStrings.Common.ConditionFair</option>
+                        <option value="Poor">@AppStrings.Common.ConditionPoor</option>
                     </select>
                     @if (errors.TryGetValue("Condition", out var eCondition))
                     {
@@ -138,7 +145,7 @@ else
 
                 <!-- Fecha de compra -->
                 <div class="form-group">
-                    <label>Fecha de compra *</label>
+                    <label>@AppStrings.ItemDetail.FieldPurchaseDate</label>
                     <input type="date"
                            class="@(errors.ContainsKey("PurchaseDate") ? "input-error" : "")"
                            @bind="model.PurchaseDate"
@@ -152,13 +159,13 @@ else
 
                 <!-- Precio de compra -->
                 <div class="form-group">
-                    <label>Precio de compra (€) *</label>
+                    <label>@AppStrings.ItemDetail.FieldPurchasePrice</label>
                     <input type="number" step="0.01" min="0"
                            class="@(errors.ContainsKey("PurchasePrice") ? "input-error" : "")"
                            @bind="model.PurchasePrice"
                            @bind:event="oninput"
                            @onblur='() => ValidateField("PurchasePrice")'
-                           placeholder="0.00" />
+                           placeholder="@AppStrings.ItemDetail.PricePlaceholder" />
                     @if (errors.TryGetValue("PurchasePrice", out var ePrice))
                     {
                         <span class="field-error">@ePrice</span>
@@ -167,13 +174,13 @@ else
 
                 <!-- Valor estimado (opcional) -->
                 <div class="form-group">
-                    <label>Valor estimado actual (€)</label>
+                    <label>@AppStrings.ItemDetail.FieldEstimatedValue</label>
                     <input type="number" step="0.01" min="0"
                            class="@(errors.ContainsKey("EstimatedValue") ? "input-error" : "")"
                            @bind="model.EstimatedValue"
                            @bind:event="oninput"
                            @onblur='() => ValidateField("EstimatedValue")'
-                           placeholder="0.00" />
+                           placeholder="@AppStrings.ItemDetail.PricePlaceholder" />
                     @if (errors.TryGetValue("EstimatedValue", out var eValue))
                     {
                         <span class="field-error">@eValue</span>
@@ -182,9 +189,9 @@ else
 
                 <!-- Notas (opcional) -->
                 <div class="form-group span-2">
-                    <label>Notas</label>
+                    <label>@AppStrings.ItemDetail.FieldNotes</label>
                     <textarea @bind="model.Notes"
-                              placeholder="Detalles de la condición, dónde lo conseguiste, número de serie…"></textarea>
+                              placeholder="@AppStrings.ItemDetail.NotesPlaceholder"></textarea>
                 </div>
 
             </div>
@@ -194,11 +201,16 @@ else
             <div style="display:flex;justify-content:flex-end;gap:10px">
                 @if (!IsNew)
                 {
-                    <button class="btn btn-danger" @onclick="() => showDeleteModal = true">Eliminar</button>
+                    <button class="btn btn-danger" @onclick="() => showDeleteModal = true">
+                        @AppStrings.Common.Delete
+                    </button>
                 }
-                <button class="btn btn-secondary" @onclick="() => Nav.NavigateTo(BackUrl)">Cancelar</button>
+                <button class="btn btn-secondary" @onclick="() => Nav.NavigateTo(BackUrl)">
+                    @AppStrings.Common.Cancel
+                </button>
                 <button class="btn btn-primary" @onclick="Save" disabled="@saving">
-                    @(saving ? "Guardando…" : (IsNew ? "Añadir artículo" : "Guardar cambios"))
+                    @(saving ? AppStrings.ItemDetail.SavingLabel
+                             : (IsNew ? AppStrings.ItemDetail.SaveNew : AppStrings.ItemDetail.SaveEdit))
                 </button>
             </div>
         </div>
@@ -206,7 +218,7 @@ else
         <!-- Checklist -->
         <div class="card">
             <div style="font-weight:600;margin-bottom:14px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">
-                Checklist
+                @AppStrings.ItemDetail.ChecklistTitle
             </div>
 
             @if (!model.ChecklistEntries.Any())
@@ -227,7 +239,9 @@ else
                     }
                 </div>
                 <div style="margin-top:12px;font-size:0.8rem;color:var(--text-2)">
-                    @model.ChecklistEntries.Count(e => e.IsChecked) / @model.ChecklistEntries.Count completados
+                    @AppStrings.ItemDetail.ChecklistProgress(
+                        model.ChecklistEntries.Count(e => e.IsChecked),
+                        model.ChecklistEntries.Count)
                 </div>
             }
         </div>
@@ -259,50 +273,51 @@ else
         {
             case "Name":
                 if (string.IsNullOrWhiteSpace(model.Name))
-                    errors["Name"] = "El nombre es obligatorio.";
+                    errors["Name"] = AppStrings.ItemDetail.ValidationNameRequired;
                 else if (model.Name.Trim().Length > 200)
-                    errors["Name"] = "El nombre no puede superar los 200 caracteres.";
+                    errors["Name"] = AppStrings.ItemDetail.ValidationNameMaxLength;
                 break;
 
             case "Platform":
                 if (string.IsNullOrWhiteSpace(model.Platform))
-                    errors["Platform"] = "Selecciona una plataforma.";
+                    errors["Platform"] = AppStrings.ItemDetail.ValidationPlatform;
                 break;
 
             case "Region":
                 if (string.IsNullOrWhiteSpace(model.Region))
-                    errors["Region"] = "Selecciona una región.";
+                    errors["Region"] = AppStrings.ItemDetail.ValidationRegion;
                 break;
 
             case "Condition":
                 if (string.IsNullOrWhiteSpace(model.Condition))
-                    errors["Condition"] = "Selecciona una condición.";
+                    errors["Condition"] = AppStrings.ItemDetail.ValidationCondition;
                 break;
 
             case "PurchaseDate":
                 if (!model.PurchaseDate.HasValue)
-                    errors["PurchaseDate"] = "La fecha de compra es obligatoria.";
+                    errors["PurchaseDate"] = AppStrings.ItemDetail.ValidationDateRequired;
                 else if (model.PurchaseDate.Value.Date > DateTime.Today)
-                    errors["PurchaseDate"] = "La fecha de compra no puede ser futura.";
+                    errors["PurchaseDate"] = AppStrings.ItemDetail.ValidationDateFuture;
                 break;
 
             case "PurchasePrice":
                 if (!model.PurchasePrice.HasValue)
-                    errors["PurchasePrice"] = "El precio de compra es obligatorio.";
+                    errors["PurchasePrice"] = AppStrings.ItemDetail.ValidationPriceRequired;
                 else if (model.PurchasePrice.Value < 0)
-                    errors["PurchasePrice"] = "El precio no puede ser negativo.";
+                    errors["PurchasePrice"] = AppStrings.ItemDetail.ValidationPriceNegative;
                 break;
 
             case "EstimatedValue":
                 if (model.EstimatedValue.HasValue && model.EstimatedValue.Value < 0)
-                    errors["EstimatedValue"] = "El valor estimado no puede ser negativo.";
+                    errors["EstimatedValue"] = AppStrings.ItemDetail.ValidationValueNegative;
                 break;
         }
     }
 
     bool ValidateAll()
     {
-        foreach (var field in new[] { "Name", "Platform", "Region", "Condition", "PurchaseDate", "PurchasePrice", "EstimatedValue" })
+        foreach (var field in new[] { "Name", "Platform", "Region", "Condition",
+                                       "PurchaseDate", "PurchasePrice", "EstimatedValue" })
             ValidateField(field);
         return errors.Count == 0;
     }
@@ -311,7 +326,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Load platforms and item data in parallel when editing
         var platformsTask = Http.GetFromJsonAsync<List<PlatformDto>>("api/platforms");
 
         if (!IsNew)
@@ -338,7 +352,11 @@ else
                 Notes          = item.Notes,
                 Status         = item.Status,
                 ChecklistEntries = item.ChecklistEntries
-                    .Select(e => new ChecklistEntryForm { Id = e.Id, Label = e.Label, IsChecked = e.IsChecked, SortOrder = e.SortOrder })
+                    .Select(e => new ChecklistEntryForm
+                    {
+                        Id = e.Id, Label = e.Label,
+                        IsChecked = e.IsChecked, SortOrder = e.SortOrder
+                    })
                     .ToList()
             };
         }
@@ -346,7 +364,6 @@ else
         {
             availablePlatforms = await platformsTask ?? [];
             if (Wishlist) model.Status = "Wishlist";
-            // Platform, Region and Condition start empty — user must pick one
             await LoadChecklistTemplate();
         }
 
@@ -359,7 +376,11 @@ else
         model.ChecklistEntries = templates
             .Where(t => t.ItemType == model.Type)
             .OrderBy(t => t.SortOrder)
-            .Select(t => new ChecklistEntryForm { Id = Guid.NewGuid(), Label = t.Label, IsChecked = false, SortOrder = t.SortOrder })
+            .Select(t => new ChecklistEntryForm
+            {
+                Id = Guid.NewGuid(), Label = t.Label,
+                IsChecked = false, SortOrder = t.SortOrder
+            })
             .ToList();
     }
 
@@ -377,7 +398,7 @@ else
 
         if (!ValidateAll())
         {
-            errorMsg = "Corrige los errores antes de guardar.";
+            errorMsg = AppStrings.ItemDetail.SaveErrorForm;
             return;
         }
 
@@ -408,7 +429,7 @@ else
                 Nav.NavigateTo(model.Status == "Wishlist" ? "/wishlist" : "/collection");
                 return;
             }
-            errorMsg = "Error al crear el artículo.";
+            errorMsg = AppStrings.ItemDetail.SaveErrorServer;
         }
         else
         {
@@ -432,8 +453,10 @@ else
 
             saving = false;
 
-            if (resp.IsSuccessStatusCode) successMsg = "Cambios guardados correctamente.";
-            else errorMsg = "Error al guardar los cambios.";
+            if (resp.IsSuccessStatusCode)
+                successMsg = AppStrings.ItemDetail.SaveSuccess;
+            else
+                errorMsg = AppStrings.ItemDetail.SaveErrorEdit;
         }
     }
 

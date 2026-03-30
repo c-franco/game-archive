@@ -1,19 +1,20 @@
 @page "/wishlist"
 @inject HttpClient Http
 @inject NavigationManager Nav
+@using GameArchive.Web.Resources
 
 <!-- Modal de confirmación -->
 @if (itemToDelete != null)
 {
     <div class="modal-overlay" @onclick="CancelDelete">
         <div class="modal-box" @onclick:stopPropagation>
-            <div class="modal-title">¿Eliminar artículo?</div>
+            <div class="modal-title">@AppStrings.Modal.DeleteTitle</div>
             <div class="modal-body">
                 Vas a eliminar <strong>@itemToDelete.Name</strong> de la lista de deseos. Esta acción no se puede deshacer.
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" @onclick="CancelDelete">Cancelar</button>
-                <button class="btn btn-danger" @onclick="ConfirmDelete">Eliminar</button>
+                <button class="btn btn-secondary" @onclick="CancelDelete">@AppStrings.Modal.CancelLabel</button>
+                <button class="btn btn-danger" @onclick="ConfirmDelete">@AppStrings.Modal.DeleteConfirmLabel</button>
             </div>
         </div>
     </div>
@@ -21,20 +22,22 @@
 
 <div class="page-header">
     <div>
-        <div class="page-title">Lista de deseos</div>
-        <div class="page-subtitle">@(items?.Count ?? 0) artículos que quieres conseguir</div>
+        <div class="page-title">@AppStrings.Wishlist.Title</div>
+        <div class="page-subtitle">@AppStrings.Wishlist.SubtitleFmt(items?.Count ?? 0)</div>
     </div>
     <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>
-        + Añadir a la lista
+        @AppStrings.Wishlist.AddItem
     </button>
 </div>
 
 <div class="filters-bar">
-    <input class="search-input" placeholder="Buscar en la lista…" @bind="searchTerm" @bind:event="oninput" @bind:after="LoadItems" />
+    <input class="search-input"
+           placeholder="@AppStrings.Wishlist.SearchPlaceholder"
+           @bind="searchTerm" @bind:event="oninput" @bind:after="LoadItems" />
     <select @bind="filterType" @bind:after="LoadItems">
-        <option value="">Todos los tipos</option>
-        <option value="Game">Juego</option>
-        <option value="Console">Consola</option>
+        <option value="">@AppStrings.Wishlist.FilterAllTypes</option>
+        <option value="Game">@AppStrings.Common.TypeGame</option>
+        <option value="Console">@AppStrings.Common.TypeConsole</option>
     </select>
 </div>
 
@@ -46,10 +49,12 @@ else if (!items.Any())
 {
     <div class="card">
         <div class="empty-state">
-            <div class="empty-icon">♡</div>
-            <div class="empty-title">La lista de deseos está vacía</div>
-            <div class="empty-desc">Registra los juegos y consolas que estás buscando.</div>
-            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>+ Añadir a la lista</button>
+            <div class="empty-icon">@AppStrings.Wishlist.EmptyIcon</div>
+            <div class="empty-title">@AppStrings.Wishlist.EmptyTitle</div>
+            <div class="empty-desc">@AppStrings.Wishlist.EmptyDesc</div>
+            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>
+                @AppStrings.Wishlist.AddItem
+            </button>
         </div>
     </div>
 }
@@ -61,9 +66,10 @@ else
             <div class="wish-card" @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>
                 <div style="display:flex;justify-content:space-between;align-items:flex-start">
                     <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">
-                        @(item.Type == "Game" ? "Juego" : "Consola")
+                        @(item.Type == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole)
                     </span>
-                    <button class="btn btn-danger btn-sm" @onclick:stopPropagation @onclick="() => AskDelete(item)">✕</button>
+                    <button class="btn btn-danger btn-sm"
+                            @onclick:stopPropagation @onclick="() => AskDelete(item)">✕</button>
                 </div>
                 <div class="wish-card-title">@item.Name</div>
                 <div class="wish-card-meta">@item.Platform · @item.Region</div>
@@ -76,8 +82,9 @@ else
                     <div class="wish-card-notes">@item.Notes</div>
                 }
                 <div style="margin-top:14px">
-                    <button class="btn btn-secondary btn-sm" @onclick:stopPropagation @onclick="() => MarkOwned(item)">
-                        ✓ Marcar como adquirido
+                    <button class="btn btn-secondary btn-sm"
+                            @onclick:stopPropagation @onclick="() => MarkOwned(item)">
+                        @AppStrings.Wishlist.MarkOwned
                     </button>
                 </div>
             </div>
@@ -97,7 +104,8 @@ else
         var q = new List<string> { "status=Wishlist" };
         if (!string.IsNullOrWhiteSpace(searchTerm)) q.Add($"search={Uri.EscapeDataString(searchTerm)}");
         if (!string.IsNullOrWhiteSpace(filterType)) q.Add($"type={filterType}");
-        items = await Http.GetFromJsonAsync<List<CollectionItemDto>>("api/items?" + string.Join("&", q)) ?? [];
+        items = await Http.GetFromJsonAsync<List<CollectionItemDto>>(
+            "api/items?" + string.Join("&", q)) ?? [];
     }
 
     async Task MarkOwned(CollectionItemDto item)

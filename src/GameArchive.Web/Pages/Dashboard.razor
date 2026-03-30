@@ -1,10 +1,11 @@
 @page "/"
 @page "/dashboard"
 @inject HttpClient Http
+@using GameArchive.Web.Resources
 
 <div class="page-header">
     <div>
-        <div class="page-title">Dashboard</div>
+        <div class="page-title">@AppStrings.Dashboard.Title</div>
     </div>
 </div>
 
@@ -17,33 +18,37 @@ else
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-value">@stats.TotalItems</div>
-            <div class="stat-label">Total artículos</div>
+            <div class="stat-label">@AppStrings.Dashboard.StatTotalItems</div>
         </div>
         <div class="stat-card">
             <div class="stat-value">@stats.TotalOwned</div>
-            <div class="stat-label">Adquiridos</div>
+            <div class="stat-label">@AppStrings.Dashboard.StatOwned</div>
         </div>
         <div class="stat-card">
             <div class="stat-value">@stats.TotalWishlist</div>
-            <div class="stat-label">Lista de deseos</div>
+            <div class="stat-label">@AppStrings.Dashboard.StatWishlist</div>
         </div>
         <div class="stat-card">
             <div class="stat-value">€@stats.TotalEstimatedValue.ToString("F0")</div>
-            <div class="stat-label">Valor estimado</div>
+            <div class="stat-label">@AppStrings.Dashboard.StatEstimatedValue</div>
         </div>
         <div class="stat-card">
             <div class="stat-value">€@stats.TotalSpent.ToString("F0")</div>
-            <div class="stat-label">Total invertido</div>
+            <div class="stat-label">@AppStrings.Dashboard.StatTotalSpent</div>
         </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div class="card">
-            <div style="font-weight:600;margin-bottom:16px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">Por tipo</div>
+            <div style="font-weight:600;margin-bottom:16px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">
+                @AppStrings.Dashboard.ChartByType
+            </div>
             @foreach (var kv in stats.ByType.OrderByDescending(x => x.Value))
             {
                 var pct = stats.TotalItems > 0 ? (kv.Value * 100.0 / stats.TotalItems) : 0;
-                var label = kv.Key == "Game" ? "Juego" : kv.Key == "Console" ? "Consola" : kv.Key;
+                var label = kv.Key == "Game" ? AppStrings.Common.TypeGame
+                          : kv.Key == "Console" ? AppStrings.Common.TypeConsole
+                          : kv.Key;
                 <div style="margin-bottom:14px">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.875rem">
                         <span>@label</span>
@@ -57,7 +62,9 @@ else
         </div>
 
         <div class="card">
-            <div style="font-weight:600;margin-bottom:16px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">Por plataforma (Top 8)</div>
+            <div style="font-weight:600;margin-bottom:16px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">
+                @AppStrings.Dashboard.ChartByPlatformTop8
+            </div>
             @foreach (var kv in stats.ByPlatform.OrderByDescending(x => x.Value).Take(8))
             {
                 var pct = stats.TotalItems > 0 ? (kv.Value * 100.0 / stats.TotalItems) : 0;

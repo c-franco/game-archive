@@ -1,29 +1,30 @@
 @inherits LayoutComponentBase
 @inject NavigationManager Nav
+@using GameArchive.Web.Resources
 
 <div class="app-shell">
     <nav class="sidebar">
         <div class="sidebar-brand">
             <span class="brand-icon">◈</span>
-            <span class="brand-name">GameArchive</span>
+            <span class="brand-name">@AppStrings.Nav.BrandName</span>
         </div>
 
         <div class="nav-section">
             <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
                 <span class="nav-icon">◎</span>
-                <span>Dashboard</span>
+                <span>@AppStrings.Nav.Dashboard</span>
             </NavLink>
             <NavLink class="nav-link" href="/collection">
                 <span class="nav-icon">⊞</span>
-                <span>Colección</span>
+                <span>@AppStrings.Nav.Collection</span>
             </NavLink>
             <NavLink class="nav-link" href="/wishlist">
                 <span class="nav-icon">♡</span>
-                <span>Lista de deseos</span>
+                <span>@AppStrings.Nav.Wishlist</span>
             </NavLink>
             <NavLink class="nav-link" href="/settings">
                 <span class="nav-icon">⚙</span>
-                <span>Ajustes</span>
+                <span>@AppStrings.Nav.Settings</span>
             </NavLink>
         </div>
     </nav>

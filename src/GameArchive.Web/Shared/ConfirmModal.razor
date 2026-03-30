@@ -1,5 +1,6 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
+@using GameArchive.Web.Resources
 
 @if (Visible)
 {
@@ -12,7 +13,7 @@
                 <div class="modal-title">@Title</div>
                 <div class="modal-message">@Message</div>
                 <div class="modal-actions">
-                    <button class="btn btn-secondary" @onclick="OnCancel">Cancelar</button>
+                    <button class="btn btn-secondary" @onclick="OnCancel">@AppStrings.Modal.CancelLabel</button>
                     <button class="btn btn-danger-solid" @onclick="OnConfirm">@ConfirmLabel</button>
                 </div>
             </div>
@@ -22,9 +23,9 @@
 
 @code {
     [Parameter] public bool Visible { get; set; }
-    [Parameter] public string Title { get; set; } = "¿Eliminar artículo?";
-    [Parameter] public string Message { get; set; } = "Esta acción no se puede deshacer.";
-    [Parameter] public string ConfirmLabel { get; set; } = "Eliminar";
+    [Parameter] public string Title { get; set; } = AppStrings.Modal.DefaultTitle;
+    [Parameter] public string Message { get; set; } = AppStrings.Modal.DefaultMessage;
+    [Parameter] public string ConfirmLabel { get; set; } = AppStrings.Modal.DefaultConfirm;
     [Parameter] public EventCallback OnConfirm { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
 

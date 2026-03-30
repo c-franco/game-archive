@@ -1,6 +1,7 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using GameArchive.Application.Common;
+using GameArchive.Application.Resources;
 using GameArchive.Domain;
 using GameArchive.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,8 @@ public class ImportService(IAppDbContext db)
         }
         catch (Exception ex)
         {
-            return new ImportResult(0, 0, [$"El fichero JSON no es válido: {ex.Message}"]);
+            return new ImportResult(0, 0,
+                [$"{ServerStrings.Import.ErrInvalidJson}{ex.Message}"]);
         }
 
         return await UpsertRowsAsync(rows.Select(r => new ImportRow
@@ -63,7 +65,8 @@ public class ImportService(IAppDbContext db)
         }
         catch (Exception ex)
         {
-            return new ImportResult(0, 0, [$"El fichero CSV no es válido: {ex.Message}"]);
+            return new ImportResult(0, 0,
+                [$"{ServerStrings.Import.ErrInvalidCsv}{ex.Message}"]);
         }
 
         var rows = rawRows.Select(r => new ImportRow
@@ -79,7 +82,6 @@ public class ImportService(IAppDbContext db)
             PurchaseDate   = TryDate(r.PurchaseDate),
             Notes          = r.Notes ?? "",
             Status         = r.Status ?? "Owned",
-            // CSV checklist format: "Box:yes, Manual:no, Cartridge/Disc:yes"
             Checklist      = ParseCsvChecklist(r.ChecklistItems)
         }).ToList();
 
@@ -98,20 +100,19 @@ public class ImportService(IAppDbContext db)
         {
             if (string.IsNullOrWhiteSpace(row.Name))
             {
-                errors.Add($"Fila {index}: el campo 'Name' es obligatorio.");
+                errors.Add(ServerStrings.Import.ErrRowNameMissing(index));
                 continue;
             }
 
             var itemType = ParseItemType(row.Type);
             if (itemType is null)
             {
-                errors.Add($"Fila {index} ({row.Name}): tipo '{row.Type}' no reconocido (valores válidos: Game, Console).");
+                errors.Add(ServerStrings.Import.ErrUnknownType(index, row.Name, row.Type));
                 continue;
             }
 
             var itemStatus = ParseItemStatus(row.Status);
 
-            // Build checklist from templates, ticking whatever was checked in the import
             var checkedLabels = row.Checklist
                 .Where(c => c.IsChecked)
                 .Select(c => c.Label.Trim().ToLowerInvariant())
@@ -128,7 +129,6 @@ public class ImportService(IAppDbContext db)
                 })
                 .ToList();
 
-            // Also carry over any checked labels from the import that aren't in templates
             foreach (var extra in row.Checklist.Where(c =>
                 c.IsChecked &&
                 !entries.Any(e => e.Label.Trim().ToLowerInvariant() == c.Label.Trim().ToLowerInvariant())))
@@ -141,7 +141,6 @@ public class ImportService(IAppDbContext db)
                 });
             }
 
-            // Try to find existing item by Id
             CollectionItem? existing = row.Id != Guid.Empty
                 ? await db.Items.Include(i => i.ChecklistEntries)
                                 .FirstOrDefaultAsync(i => i.Id == row.Id)
@@ -156,12 +155,12 @@ public class ImportService(IAppDbContext db)
                 existing.Condition      = row.Condition;
                 existing.PurchasePrice  = row.PurchasePrice;
                 existing.EstimatedValue = row.EstimatedValue;
-                existing.PurchaseDate   = row.PurchaseDate.HasValue ? DateOnly.FromDateTime(row.PurchaseDate.Value) : null;
+                existing.PurchaseDate   = row.PurchaseDate.HasValue
+                    ? DateOnly.FromDateTime(row.PurchaseDate.Value) : null;
                 existing.Notes          = row.Notes;
                 existing.Status         = itemStatus;
                 existing.UpdatedAt      = DateTimeOffset.UtcNow;
 
-                // Replace checklist entries
                 existing.ChecklistEntries.Clear();
                 foreach (var e in entries) existing.ChecklistEntries.Add(e);
 
@@ -179,9 +178,10 @@ public class ImportService(IAppDbContext db)
                     Condition      = row.Condition,
                     PurchasePrice  = row.PurchasePrice,
                     EstimatedValue = row.EstimatedValue,
-                    PurchaseDate   = row.PurchaseDate.HasValue ? DateOnly.FromDateTime(row.PurchaseDate.Value) : null,
-                    Notes          = row.Notes,
-                    Status         = itemStatus,
+                    PurchaseDate   = row.PurchaseDate.HasValue
+                        ? DateOnly.FromDateTime(row.PurchaseDate.Value) : null,
+                    Notes            = row.Notes,
+                    Status           = itemStatus,
                     ChecklistEntries = entries
                 };
                 db.Items.Add(item);
@@ -214,7 +214,8 @@ public class ImportService(IAppDbContext db)
         => decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var v) ? v : null;
 
     private static DateTime? TryDate(string? s)
-        => DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d : null;
+        => DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out var d) ? d : null;
 
     private static List<ChecklistImportEntry> ParseCsvChecklist(string? raw)
     {
@@ -232,8 +233,6 @@ public class ImportService(IAppDbContext db)
             .Select(x => x!)
             .ToList();
     }
-
-    // ── JSON serialisation options ────────────────────────────────────────────
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -299,17 +298,19 @@ public record ChecklistImportEntry(string Label, bool IsChecked);
 /// <summary>Handles both "yyyy-MM-dd" strings and full ISO-8601 date-time strings.</summary>
 public class FlexibleDateConverter : JsonConverter<DateTime?>
 {
-    public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert,
+        JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null) return null;
         var s = reader.GetString();
         if (string.IsNullOrWhiteSpace(s)) return null;
-        if (DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt))
-            return dt;
+        if (DateTime.TryParse(s, CultureInfo.InvariantCulture,
+            DateTimeStyles.RoundtripKind, out var dt)) return dt;
         return null;
     }
 
-    public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, DateTime? value,
+        JsonSerializerOptions options)
     {
         if (value is null) writer.WriteNullValue();
         else writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd"));

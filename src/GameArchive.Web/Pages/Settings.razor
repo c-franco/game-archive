@@ -1,9 +1,10 @@
 @page "/settings"
 @inject HttpClient Http
+@using GameArchive.Web.Resources
 
 <div class="page-header">
     <div>
-        <div class="page-title">Ajustes</div>
+        <div class="page-title">@AppStrings.Settings.Title</div>
     </div>
 </div>
 
@@ -15,20 +16,26 @@ else
 {
     <!-- ── Datos ──────────────────────────────────────────────────────────── -->
     <div class="card" style="margin-bottom:20px">
-        <div style="font-weight:600;font-size:0.95rem;margin-bottom:14px">Datos</div>
+        <div style="font-weight:600;font-size:0.95rem;margin-bottom:14px">
+            @AppStrings.Settings.DataSectionTitle
+        </div>
 
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <a href="api/export/csv"  class="btn btn-secondary" target="_blank">Exportar CSV</a>
-            <a href="api/export/json" class="btn btn-secondary" target="_blank">Exportar JSON</a>
+            <a href="api/export/csv"  class="btn btn-secondary" target="_blank">
+                @AppStrings.Settings.ExportCsv
+            </a>
+            <a href="api/export/json" class="btn btn-secondary" target="_blank">
+                @AppStrings.Settings.ExportJson
+            </a>
 
             <div style="width:2px;height:34px;background:var(--border);flex-shrink:0;margin:0 10px"></div>
 
             <label class="btn btn-secondary" style="cursor:pointer;text-transform:none;letter-spacing:normal">
-                Importar CSV
+                @AppStrings.Settings.ImportCsv
                 <InputFile OnChange='e => OnFileSelected(e, "csv")' accept=".csv" style="display:none" />
             </label>
             <label class="btn btn-secondary" style="cursor:pointer;text-transform:none;letter-spacing:normal">
-                Importar JSON
+                @AppStrings.Settings.ImportJson
                 <InputFile OnChange='e => OnFileSelected(e, "json")' accept=".json" style="display:none" />
             </label>
         </div>
@@ -37,7 +44,7 @@ else
         {
             <div style="margin-top:14px;display:flex;align-items:center;gap:10px;color:var(--text-2);font-size:0.875rem">
                 <div class="spinner" style="width:18px;height:18px;border-width:2px"></div>
-                Importando…
+                @AppStrings.Settings.Importing
             </div>
         }
 
@@ -47,13 +54,13 @@ else
                 @if (importResult.Errors.Count == 0)
                 {
                     <div class="alert alert-success">
-                        Importación completada — @importResult.Created creado(s), @importResult.Updated actualizado(s).
+                        @AppStrings.Settings.ImportSuccessFmt(importResult.Created, importResult.Updated)
                     </div>
                 }
                 else
                 {
                     <div class="alert alert-error" style="margin-bottom:8px">
-                        Importación con errores — @importResult.Created creado(s), @importResult.Updated actualizado(s).
+                        @AppStrings.Settings.ImportErrorFmt(importResult.Created, importResult.Updated)
                     </div>
                     <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:0.8rem;color:var(--red);display:flex;flex-direction:column;gap:4px">
                         @foreach (var err in importResult.Errors)
@@ -70,22 +77,26 @@ else
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
         @foreach (var itemType in new[] { "Console", "Game" })
         {
-            var label = itemType == "Game" ? "Juego" : "Consola";
+            var label = itemType == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole;
             var group = GetTemplateGroup(itemType);
 
             <div class="card">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
                     <div style="font-weight:600;font-size:0.95rem">
-                        <span class="badge @(itemType == "Game" ? "badge-game" : "badge-console")" style="margin-right:8px">@label</span>
-                        Checklist
+                        <span class="badge @(itemType == "Game" ? "badge-game" : "badge-console")"
+                              style="margin-right:8px">@label</span>
+                        @AppStrings.Settings.ChecklistSuffix
                     </div>
-                    <button class="btn btn-secondary btn-sm" @onclick="() => AddTemplateRow(itemType)">+ Añadir</button>
+                    <button class="btn btn-secondary btn-sm"
+                            @onclick="() => AddTemplateRow(itemType)">
+                        @AppStrings.Settings.AddTemplateRow
+                    </button>
                 </div>
 
                 @if (!group.Any())
                 {
                     <div style="color:var(--text-3);font-size:0.875rem;padding:12px 0">
-                        Sin artículos. Los nuevos @label.ToLower()s tendrán el checklist vacío.
+                        @AppStrings.Settings.ChecklistEmptyFmt(label)
                     </div>
                 }
                 else
@@ -96,8 +107,9 @@ else
                             <div style="display:flex;gap:8px;align-items:center">
                                 <input value="@t.Label"
                                        @onchange="e => t.Label = e.Value?.ToString() ?? t.Label"
-                                       placeholder="Etiqueta…" />
-                                <input type="number" style="max-width:64px;flex-shrink:0" title="Orden"
+                                       placeholder="@AppStrings.Settings.TemplateLabelPlaceholder" />
+                                <input type="number" style="max-width:64px;flex-shrink:0"
+                                       title="@AppStrings.Settings.TemplateOrderTitle"
                                        value="@t.SortOrder"
                                        @onchange="e => { if (int.TryParse(e.Value?.ToString(), out var o)) t.SortOrder = o; }" />
                                 <button class="btn btn-danger btn-sm" style="flex-shrink:0"
@@ -112,13 +124,15 @@ else
 
     <!-- ── Platforms ─────────────────────────────────────────────────────── -->
     <div class="card" style="margin-bottom:20px">
-        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">Plataformas</div>
+        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">
+            @AppStrings.Settings.PlatformsSectionTitle
+        </div>
         <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">
-            Una plataforma por línea.
+            @AppStrings.Settings.PlatformsHint
         </div>
         <textarea style="min-height:220px;font-family:'Space Mono',monospace;font-size:0.85rem;resize:vertical"
                   @bind="platformsText"
-                  placeholder="Nintendo 64&#10;SNES&#10;PlayStation&#10;…"></textarea>
+                  placeholder="@AppStrings.Settings.PlatformsPlaceholder"></textarea>
     </div>
 
     <!-- ── Save ──────────────────────────────────────────────────────────── -->
@@ -126,18 +140,19 @@ else
 
     @if (!string.IsNullOrEmpty(saveMsg))
     {
-        <div class="alert @(saveError ? "alert-error" : "alert-success")" style="margin-bottom:16px">@saveMsg</div>
+        <div class="alert @(saveError ? "alert-error" : "alert-success")" style="margin-bottom:16px">
+            @saveMsg
+        </div>
     }
 
     <div style="padding-bottom:32px">
         <button class="btn btn-save" @onclick="SaveAll" disabled="@saving">
-            @(saving ? "Guardando…" : "Guardar ajustes")
+            @(saving ? AppStrings.Common.Saving : AppStrings.Settings.SaveButton)
         </button>
     </div>
 }
 
 @code {
-    // Local state — null means "still loading"
     List<TemplateRow>? localTemplates = null;
     string?            platformsText  = null;
 
@@ -148,7 +163,7 @@ else
     bool             importing    = false;
     ImportResultDto? importResult = null;
 
-    // ── Load — 1 HTTP request ─────────────────────────────────────────────────
+    // ── Load ──────────────────────────────────────────────────────────────────
 
     protected override async Task OnInitializedAsync()
     {
@@ -162,11 +177,11 @@ else
         localTemplates = s.Templates
             .Select(t => new TemplateRow
             {
-                Id       = t.Id,
-                ItemType = t.ItemType,
-                Label    = t.Label,
+                Id        = t.Id,
+                ItemType  = t.ItemType,
+                Label     = t.Label,
                 SortOrder = t.SortOrder,
-                IsNew    = false
+                IsNew     = false
             })
             .ToList();
 
@@ -195,7 +210,7 @@ else
 
     void RemoveTemplateRow(TemplateRow t) => localTemplates!.Remove(t);
 
-    // ── Save — 1 HTTP request ─────────────────────────────────────────────────
+    // ── Save ──────────────────────────────────────────────────────────────────
 
     async Task SaveAll()
     {
@@ -228,16 +243,15 @@ else
 
         if (resp.IsSuccessStatusCode)
         {
-            // Reload canonical state with a single GET
             var settings = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
             if (settings is not null) BuildLocalState(settings);
 
-            saveMsg   = "Ajustes guardados correctamente.";
+            saveMsg   = AppStrings.Settings.SaveSuccess;
             saveError = false;
         }
         else
         {
-            saveMsg   = $"Error al guardar los ajustes ({(int)resp.StatusCode}).";
+            saveMsg   = AppStrings.Settings.SaveErrorFmt((int)resp.StatusCode);
             saveError = true;
         }
 
@@ -253,13 +267,19 @@ else
         try
         {
             var content = new MultipartFormDataContent();
-            content.Add(new StreamContent(e.File.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)), "file", e.File.Name);
+            content.Add(new StreamContent(e.File.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)),
+                        "file", e.File.Name);
             var resp = await Http.PostAsync($"api/import/{format}", content);
             importResult = resp.IsSuccessStatusCode
                 ? await resp.Content.ReadFromJsonAsync<ImportResultDto>()
-                : new ImportResultDto(0, 0, [$"Error del servidor: {resp.StatusCode}"]);
+                : new ImportResultDto(0, 0,
+                    [AppStrings.Settings.ImportServerErrorFmt((int)resp.StatusCode)]);
         }
-        catch (Exception ex) { importResult = new ImportResultDto(0, 0, [$"Error inesperado: {ex.Message}"]); }
+        catch (Exception ex)
+        {
+            importResult = new ImportResultDto(0, 0,
+                [AppStrings.Settings.ImportUnexpectedErrorFmt(ex.Message)]);
+        }
         finally { importing = false; }
     }
 

@@ -1,19 +1,20 @@
 @page "/collection"
 @inject HttpClient Http
 @inject NavigationManager Nav
+@using GameArchive.Web.Resources
 
 <!-- Modal de confirmación -->
 @if (itemToDelete != null)
 {
     <div class="modal-overlay" @onclick="CancelDelete">
         <div class="modal-box" @onclick:stopPropagation>
-            <div class="modal-title">¿Eliminar artículo?</div>
+            <div class="modal-title">@AppStrings.Modal.DeleteTitle</div>
             <div class="modal-body">
                 Vas a eliminar <strong>@itemToDelete.Name</strong>. Esta acción no se puede deshacer.
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" @onclick="CancelDelete">Cancelar</button>
-                <button class="btn btn-danger" @onclick="ConfirmDelete">Eliminar</button>
+                <button class="btn btn-secondary" @onclick="CancelDelete">@AppStrings.Modal.CancelLabel</button>
+                <button class="btn btn-danger" @onclick="ConfirmDelete">@AppStrings.Modal.DeleteConfirmLabel</button>
             </div>
         </div>
     </div>
@@ -21,50 +22,52 @@
 
 <div class="page-header">
     <div>
-        <div class="page-title">Colección</div>
-        <div class="page-subtitle">@(items?.Count ?? 0) artículos</div>
+        <div class="page-title">@AppStrings.Collection.Title</div>
+        <div class="page-subtitle">@AppStrings.Collection.SubtitleFmt(items?.Count ?? 0)</div>
     </div>
     <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>
-        + Añadir artículo
+        @AppStrings.Collection.AddItem
     </button>
 </div>
 
 <div class="filters-bar">
-    <input class="search-input" placeholder="Buscar por nombre…" @bind="searchTerm" @bind:event="oninput" @bind:after="OnFilterChanged" />
+    <input class="search-input"
+           placeholder="@AppStrings.Collection.SearchPlaceholder"
+           @bind="searchTerm" @bind:event="oninput" @bind:after="OnFilterChanged" />
     <select @bind="filterType" @bind:after="OnFilterChanged">
-        <option value="">Todos los tipos</option>
-        <option value="Game">Juego</option>
-        <option value="Console">Consola</option>
+        <option value="">@AppStrings.Collection.FilterAllTypes</option>
+        <option value="Game">@AppStrings.Common.TypeGame</option>
+        <option value="Console">@AppStrings.Common.TypeConsole</option>
     </select>
     <select @bind="filterPlatform" @bind:after="OnFilterChanged">
-        <option value="">Todas las plataformas</option>
+        <option value="">@AppStrings.Collection.FilterAllPlatforms</option>
         @foreach (var p in platforms)
         {
             <option value="@p">@p</option>
         }
     </select>
     <select @bind="filterRegion" @bind:after="OnFilterChanged">
-        <option value="">Todas las regiones</option>
-        <option value="PAL">PAL</option>
-        <option value="NTSC-U">NTSC-U</option>
-        <option value="NTSC-J">NTSC-J</option>
-        <option value="NTSC">NTSC</option>
+        <option value="">@AppStrings.Collection.FilterAllRegions</option>
+        <option value="PAL">@AppStrings.Common.RegionPal</option>
+        <option value="NTSC-U">@AppStrings.Common.RegionNtscU</option>
+        <option value="NTSC-J">@AppStrings.Common.RegionNtscJ</option>
+        <option value="NTSC">@AppStrings.Common.RegionNtsc</option>
     </select>
     <select @bind="filterCondition" @bind:after="OnFilterChanged">
-        <option value="">Todos los estados</option>
-        <option value="New">Nuevo</option>
-        <option value="Good">Bueno</option>
-        <option value="Fair">Regular</option>
-        <option value="Poor">Malo</option>
+        <option value="">@AppStrings.Collection.FilterAllConditions</option>
+        <option value="New">@AppStrings.Common.ConditionNew</option>
+        <option value="Good">@AppStrings.Common.ConditionGood</option>
+        <option value="Fair">@AppStrings.Common.ConditionFair</option>
+        <option value="Poor">@AppStrings.Common.ConditionPoor</option>
     </select>
     <select @bind="sortBy" @bind:after="OnFilterChanged">
-        <option value="name">Ordenar: Nombre</option>
-        <option value="date">Ordenar: Fecha</option>
-        <option value="price">Ordenar: Precio</option>
-        <option value="value">Ordenar: Valor</option>
+        <option value="name">@AppStrings.Collection.SortName</option>
+        <option value="date">@AppStrings.Collection.SortDate</option>
+        <option value="price">@AppStrings.Collection.SortPrice</option>
+        <option value="value">@AppStrings.Collection.SortValue</option>
     </select>
     <button class="btn btn-secondary btn-sm" @onclick="ToggleSort">
-        @(descending ? "↓ Desc" : "↑ Asc")
+        @(descending ? AppStrings.Collection.SortDesc : AppStrings.Collection.SortAsc)
     </button>
 </div>
 
@@ -76,10 +79,12 @@ else if (!items.Any())
 {
     <div class="card">
         <div class="empty-state">
-            <div class="empty-icon">◈</div>
-            <div class="empty-title">No se encontraron artículos</div>
-            <div class="empty-desc">Añade tu primer juego o consola para empezar.</div>
-        <button class="btn btn-primary" @onclick='() =>Nav.NavigateTo("/items/new")'>+ Añadir artículo </button>
+            <div class="empty-icon">@AppStrings.Collection.EmptyIcon</div>
+            <div class="empty-title">@AppStrings.Collection.EmptyTitle</div>
+            <div class="empty-desc">@AppStrings.Collection.EmptyDesc</div>
+            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>
+                @AppStrings.Collection.AddItem
+            </button>
         </div>
     </div>
 }
@@ -89,14 +94,14 @@ else
         <table>
             <thead>
                 <tr>
-                    <th>Nombre</th>
-                    <th>Tipo</th>
-                    <th>Plataforma</th>
-                    <th>Región</th>
-                    <th>Estado</th>
-                    <th>Pagado</th>
-                    <th>Valor</th>
-                    <th>Checklist</th>
+                    <th>@AppStrings.Collection.ColName</th>
+                    <th>@AppStrings.Collection.ColType</th>
+                    <th>@AppStrings.Collection.ColPlatform</th>
+                    <th>@AppStrings.Collection.ColRegion</th>
+                    <th>@AppStrings.Collection.ColCondition</th>
+                    <th>@AppStrings.Collection.ColPurchasePrice</th>
+                    <th>@AppStrings.Collection.ColEstimatedValue</th>
+                    <th>@AppStrings.Collection.ColChecklist</th>
                     <th></th>
                 </tr>
             </thead>
@@ -109,7 +114,7 @@ else
                         <td class="td-name">@item.Name</td>
                         <td>
                             <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">
-                                @(item.Type == "Game" ? "Juego" : "Consola")
+                                @(item.Type == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole)
                             </span>
                         </td>
                         <td class="td-muted">@item.Platform</td>
@@ -126,8 +131,10 @@ else
                             }
                         </td>
                         <td @onclick:stopPropagation style="display:flex;gap:6px;padding:8px 16px">
-                            <button class="btn btn-secondary btn-sm" @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>✎</button>
-                            <button class="btn btn-danger btn-sm" @onclick="() => AskDelete(item)">✕</button>
+                            <button class="btn btn-secondary btn-sm"
+                                    @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>✎</button>
+                            <button class="btn btn-danger btn-sm"
+                                    @onclick="() => AskDelete(item)">✕</button>
                         </td>
                     </tr>
                 }
@@ -139,7 +146,8 @@ else
 @code {
     List<CollectionItemDto>? items;
     List<string> platforms = [];
-    string searchTerm = "", filterType = "", filterPlatform = "", filterRegion = "", filterCondition = "", sortBy = "name";
+    string searchTerm = "", filterType = "", filterPlatform = "",
+           filterRegion = "", filterCondition = "", sortBy = "name";
     bool descending = false;
 
     CollectionItemDto? itemToDelete;
@@ -150,7 +158,11 @@ else
     {
         var url = BuildUrl();
         items = await Http.GetFromJsonAsync<List<CollectionItemDto>>(url) ?? [];
-        platforms = items.Select(i => i.Platform).Where(p => !string.IsNullOrEmpty(p)).Distinct().OrderBy(p => p).ToList();
+        platforms = items.Select(i => i.Platform)
+                         .Where(p => !string.IsNullOrEmpty(p))
+                         .Distinct()
+                         .OrderBy(p => p)
+                         .ToList();
     }
 
     string BuildUrl()
@@ -179,14 +191,15 @@ else
         await LoadItems();
     }
 
-    static string FormatPrice(decimal? v) => v.HasValue ? $"€{v:F2}" : "—";
+    static string FormatPrice(decimal? v)
+        => v.HasValue ? $"€{v:F2}" : AppStrings.Common.Dash;
 
     static string TranslateCondition(string c) => c switch
     {
-        "New"  => "Nuevo",
-        "Good" => "Bueno",
-        "Fair" => "Regular",
-        "Poor" => "Malo",
+        "New"  => AppStrings.Common.ConditionNew,
+        "Good" => AppStrings.Common.ConditionGood,
+        "Fair" => AppStrings.Common.ConditionFair,
+        "Poor" => AppStrings.Common.ConditionPoor,
         _      => c
     };
 }
