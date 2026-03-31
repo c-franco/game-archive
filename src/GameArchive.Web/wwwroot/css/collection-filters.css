@@ -1,0 +1,329 @@
+/* ── Collection – Option D filters ────────────────────────────────────────── */
+
+/* Overlay invisible que captura clicks fuera de cualquier dropdown */
+.dropdown-dismiss-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 199; /* justo debajo de .filter-dropdown (z-index: 200) */
+    background: transparent;
+    cursor: default;
+}
+
+/* Fila 1: buscador + sort */
+.filters-row-1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.search-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 11px;
+    font-size: 1rem;
+    color: var(--text-3);
+    pointer-events: none;
+    line-height: 1;
+}
+
+.search-input-d {
+    width: 100%;
+    padding: 9px 36px 9px 34px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.search-input-d:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.search-input-d::placeholder { color: var(--text-3); }
+
+.search-clear {
+    position: absolute;
+    right: 9px;
+    background: transparent;
+    border: none;
+    color: var(--text-3);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color var(--transition);
+    width: auto;
+}
+
+.search-clear:hover { color: var(--text); }
+
+.sort-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.sort-select {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.sort-dir-btn {
+    flex-shrink: 0;
+    font-size: 1rem;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Fila 2: botones de categoría */
+.filters-row-2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.filter-dropdown-wrap { position: relative; }
+
+.filter-cat-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-2);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+
+.filter-cat-btn:hover {
+    border-color: var(--border-2);
+    color: var(--text);
+}
+
+.filter-cat-btn.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.cat-arrow { font-size: 0.65rem; opacity: 0.6; }
+
+/* Badge con el contador de selección múltiple */
+.filter-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* Dropdown base */
+.filter-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 200;
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius-lg);
+    padding: 6px;
+    min-width: 190px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Dropdown multi-select: scroll si hay muchas opciones */
+.filter-dropdown-multi {
+    max-height: 280px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-2) transparent;
+}
+
+.filter-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: all var(--transition);
+    user-select: none;
+}
+
+.filter-dropdown-item:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.filter-dropdown-item.selected {
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+/* Dot para selección única */
+.fdi-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    flex-shrink: 0;
+    opacity: 0.5;
+}
+
+.filter-dropdown-item.selected .fdi-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    opacity: 1;
+}
+
+/* Checkbox para selección múltiple */
+.filter-check-item { cursor: pointer; }
+
+.fdi-checkbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border-2);
+    font-size: 0.65rem;
+    flex-shrink: 0;
+    transition: all var(--transition);
+    color: transparent;
+}
+
+.filter-check-item.selected .fdi-checkbox,
+.fdi-checkbox.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+/* Footer del dropdown multi (botón limpiar) */
+.dropdown-footer {
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+    padding-top: 6px;
+}
+
+.btn-clear-dropdown {
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--text-3);
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: var(--radius);
+    text-align: left;
+    transition: color var(--transition), background var(--transition);
+}
+
+.btn-clear-dropdown:hover {
+    color: var(--red);
+    background: var(--red-dim);
+}
+
+/* Fila 3: chips activos */
+.active-chips-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px 4px 11px;
+    border-radius: 999px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(124, 106, 247, 0.35);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.65rem;
+    cursor: pointer;
+    padding: 1px 3px;
+    opacity: 0.7;
+    transition: opacity var(--transition), background var(--transition);
+    width: auto;
+    height: auto;
+}
+
+.chip-remove:hover {
+    opacity: 1;
+    background: rgba(124, 106, 247, 0.2);
+}
+
+.btn-clear-all {
+    background: transparent;
+    border: none;
+    color: var(--text-3);
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: var(--radius);
+    transition: color var(--transition);
+}
+
+.btn-clear-all:hover { color: var(--text-2); }

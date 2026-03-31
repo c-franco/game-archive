@@ -105,7 +105,7 @@ public static class AppStrings
     public static class Wishlist
     {
         public const string Title              = "Lista de deseos";
-        public static string SubtitleFmt(int count) => $"{count} artículos que quieres conseguir";
+        public static string SubtitleFmt(int count) => $"{count} artículos";
 
         public const string AddItem            = "+ Añadir a la lista";
         public const string SearchPlaceholder  = "Buscar en la lista…";

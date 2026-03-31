@@ -3,7 +3,6 @@
 @inject NavigationManager Nav
 @using GameArchive.Web.Resources
 
-<!-- Modal de confirmación -->
 @if (itemToDelete != null)
 {
     <div class="modal-overlay" @onclick="CancelDelete">
@@ -20,6 +19,12 @@
     </div>
 }
 
+@* Overlay invisible que cierra cualquier dropdown al hacer clic fuera *@
+@if (openDropdown != null)
+{
+    <div class="dropdown-dismiss-overlay" @onclick="CloseDropdown"></div>
+}
+
 <div class="page-header">
     <div>
         <div class="page-title">@AppStrings.Collection.Title</div>
@@ -30,47 +35,183 @@
     </button>
 </div>
 
-<div class="filters-bar">
-    <input class="search-input"
-           placeholder="@AppStrings.Collection.SearchPlaceholder"
-           @bind="searchTerm" @bind:event="oninput" @bind:after="OnFilterChanged" />
-    <select @bind="filterType" @bind:after="OnFilterChanged">
-        <option value="">@AppStrings.Collection.FilterAllTypes</option>
-        <option value="Game">@AppStrings.Common.TypeGame</option>
-        <option value="Console">@AppStrings.Common.TypeConsole</option>
-    </select>
-    <select @bind="filterPlatform" @bind:after="OnFilterChanged">
-        <option value="">@AppStrings.Collection.FilterAllPlatforms</option>
-        @foreach (var p in platforms)
+<!-- ── Fila 1: buscador + sort ──────────────────────────────────────────────── -->
+<div class="filters-row-1">
+    <div class="search-wrapper">
+        <span class="search-icon">⌕</span>
+        <input class="search-input-d"
+               placeholder="@AppStrings.Collection.SearchPlaceholder"
+               @bind="searchTerm" @bind:event="oninput" @bind:after="OnFilterChanged" />
+        @if (!string.IsNullOrEmpty(searchTerm))
         {
-            <option value="@p">@p</option>
+            <button class="search-clear" @onclick="ClearSearch">✕</button>
         }
-    </select>
-    <select @bind="filterRegion" @bind:after="OnFilterChanged">
-        <option value="">@AppStrings.Collection.FilterAllRegions</option>
-        <option value="PAL">@AppStrings.Common.RegionPal</option>
-        <option value="NTSC-U">@AppStrings.Common.RegionNtscU</option>
-        <option value="NTSC-J">@AppStrings.Common.RegionNtscJ</option>
-        <option value="NTSC">@AppStrings.Common.RegionNtsc</option>
-    </select>
-    <select @bind="filterCondition" @bind:after="OnFilterChanged">
-        <option value="">@AppStrings.Collection.FilterAllConditions</option>
-        <option value="New">@AppStrings.Common.ConditionNew</option>
-        <option value="Good">@AppStrings.Common.ConditionGood</option>
-        <option value="Fair">@AppStrings.Common.ConditionFair</option>
-        <option value="Poor">@AppStrings.Common.ConditionPoor</option>
-    </select>
-    <select @bind="sortBy" @bind:after="OnFilterChanged">
-        <option value="name">@AppStrings.Collection.SortName</option>
-        <option value="date">@AppStrings.Collection.SortDate</option>
-        <option value="price">@AppStrings.Collection.SortPrice</option>
-        <option value="value">@AppStrings.Collection.SortValue</option>
-    </select>
-    <button class="btn btn-secondary btn-sm" @onclick="ToggleSort">
-        @(descending ? AppStrings.Collection.SortDesc : AppStrings.Collection.SortAsc)
-    </button>
+    </div>
+
+    <div class="sort-group">
+        <select class="sort-select" @bind="sortBy" @bind:after="OnFilterChanged">
+            <option value="name">@AppStrings.Collection.SortName</option>
+            <option value="date">@AppStrings.Collection.SortDate</option>
+            <option value="price">@AppStrings.Collection.SortPrice</option>
+            <option value="value">@AppStrings.Collection.SortValue</option>
+        </select>
+        <button class="btn btn-secondary btn-sm sort-dir-btn" @onclick="ToggleSort"
+                title="@(descending ? "Descendente" : "Ascendente")">
+            @(descending ? "↓" : "↑")
+        </button>
+    </div>
 </div>
 
+<!-- ── Fila 2: botones de categoría ────────────────────────────────────────── -->
+<div class="filters-row-2">
+
+    <!-- Tipo (selección única) -->
+    <div class="filter-dropdown-wrap">
+        <button class="filter-cat-btn @(filterType != "" ? "active" : "")"
+                @onclick='e => ToggleDropdown("type")'>
+            @TypeLabel
+            <span class="cat-arrow">▾</span>
+        </button>
+        @if (openDropdown == "type")
+        {
+            <div class="filter-dropdown">
+                <div class="filter-dropdown-item @(filterType == "" ? "selected" : "")"
+                     @onclick='async () => await SetSingleFilter("type", "")'>
+                    <span class="fdi-dot"></span>@AppStrings.Collection.FilterAllTypes
+                </div>
+                <div class="filter-dropdown-item @(filterType == "Game" ? "selected" : "")"
+                     @onclick='async () => await SetSingleFilter("type", "Game")'>
+                    <span class="fdi-dot"></span>@AppStrings.Common.TypeGame
+                </div>
+                <div class="filter-dropdown-item @(filterType == "Console" ? "selected" : "")"
+                     @onclick='async () => await SetSingleFilter("type", "Console")'>
+                    <span class="fdi-dot"></span>@AppStrings.Common.TypeConsole
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Plataforma (selección múltiple) -->
+    <div class="filter-dropdown-wrap">
+        <button class="filter-cat-btn @(filterPlatforms.Count > 0 ? "active" : "")"
+                @onclick='e => ToggleDropdown("platform")'>
+            @PlatformLabel
+            @if (filterPlatforms.Count > 1)
+            {
+                <span class="filter-count-badge">@filterPlatforms.Count</span>
+            }
+            <span class="cat-arrow">▾</span>
+        </button>
+        @if (openDropdown == "platform")
+        {
+            <div class="filter-dropdown filter-dropdown-multi">
+                @foreach (var p in platforms)
+                {
+                    var pCopy     = p;
+                    var isChecked = filterPlatforms.Contains(pCopy);
+                    <div class="filter-dropdown-item filter-check-item @(isChecked ? "selected" : "")"
+                         @onclick='async () => await ToggleMultiFilter(filterPlatforms, pCopy)'>
+                        <span class="fdi-checkbox @(isChecked ? "checked" : "")">@(isChecked ? "✓" : "")</span>
+                        @pCopy
+                    </div>
+                }
+                @if (filterPlatforms.Count > 0)
+                {
+                    <div class="dropdown-footer">
+                        <button class="btn-clear-dropdown"
+                                @onclick='async () => await ClearMultiFilter(filterPlatforms)'>
+                            Limpiar selección
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Región (selección múltiple) -->
+    <div class="filter-dropdown-wrap">
+        <button class="filter-cat-btn @(filterRegions.Count > 0 ? "active" : "")"
+                @onclick='e => ToggleDropdown("region")'>
+            @RegionLabel
+            @if (filterRegions.Count > 1)
+            {
+                <span class="filter-count-badge">@filterRegions.Count</span>
+            }
+            <span class="cat-arrow">▾</span>
+        </button>
+        @if (openDropdown == "region")
+        {
+            <div class="filter-dropdown filter-dropdown-multi">
+                @foreach (var (val, label) in RegionOptions)
+                {
+                    var vCopy     = val;
+                    var lCopy     = label;
+                    var isChecked = filterRegions.Contains(vCopy);
+                    <div class="filter-dropdown-item filter-check-item @(isChecked ? "selected" : "")"
+                         @onclick='async () => await ToggleMultiFilter(filterRegions, vCopy)'>
+                        <span class="fdi-checkbox @(isChecked ? "checked" : "")">@(isChecked ? "✓" : "")</span>
+                        @lCopy
+                    </div>
+                }
+                @if (filterRegions.Count > 0)
+                {
+                    <div class="dropdown-footer">
+                        <button class="btn-clear-dropdown"
+                                @onclick='async () => await ClearMultiFilter(filterRegions)'>
+                            Limpiar selección
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Condición (selección única) -->
+    <div class="filter-dropdown-wrap">
+        <button class="filter-cat-btn @(filterCondition != "" ? "active" : "")"
+                @onclick='e => ToggleDropdown("condition")'>
+            @(filterCondition == "" ? AppStrings.Collection.FilterAllConditions : TranslateCondition(filterCondition))
+            <span class="cat-arrow">▾</span>
+        </button>
+        @if (openDropdown == "condition")
+        {
+            <div class="filter-dropdown">
+                <div class="filter-dropdown-item @(filterCondition == "" ? "selected" : "")"
+                     @onclick='async () => await SetSingleFilter("condition", "")'>
+                    <span class="fdi-dot"></span>@AppStrings.Collection.FilterAllConditions
+                </div>
+                @foreach (var (val, label) in ConditionOptions)
+                {
+                    var vCopy = val; var lCopy = label;
+                    <div class="filter-dropdown-item @(filterCondition == vCopy ? "selected" : "")"
+                         @onclick='async () => await SetSingleFilter("condition", vCopy)'>
+                        <span class="fdi-dot"></span>@lCopy
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ── Fila 3: chips de filtros activos ────────────────────────────────────── -->
+@if (ActiveChips.Any())
+{
+    <div class="active-chips-row">
+        @foreach (var (key, value, label) in ActiveChips)
+        {
+            var keyCopy   = key;
+            var valueCopy = value;
+            <span class="filter-chip">
+                @label
+                <button class="chip-remove"
+                        @onclick='async () => await RemoveChip(keyCopy, valueCopy)'>✕</button>
+            </span>
+        }
+        <button class="btn-clear-all" @onclick="ClearAllFilters">Limpiar todo</button>
+    </div>
+}
+
+<!-- ── Tabla ────────────────────────────────────────────────────────────────── -->
 @if (items == null)
 {
     <div class="spinner-center"><div class="spinner"></div></div>
@@ -146,39 +287,176 @@ else
 @code {
     List<CollectionItemDto>? items;
     List<string> platforms = [];
-    string searchTerm = "", filterType = "", filterPlatform = "",
-           filterRegion = "", filterCondition = "", sortBy = "name";
-    bool descending = false;
+
+    string          searchTerm      = "";
+    string          filterType      = "";
+    HashSet<string> filterPlatforms = [];
+    HashSet<string> filterRegions   = [];
+    string          filterCondition = "";
+    string          sortBy          = "name";
+    bool            descending      = false;
+
+    string? openDropdown = null;
 
     CollectionItemDto? itemToDelete;
+
+    // ── Opciones estáticas ─────────────────────────────────────────────────────
+
+    static (string val, string label)[] RegionOptions =>
+    [
+        ("PAL",    AppStrings.Common.RegionPal),
+        ("NTSC-U", AppStrings.Common.RegionNtscU),
+        ("NTSC-J", AppStrings.Common.RegionNtscJ),
+        ("NTSC",   AppStrings.Common.RegionNtsc),
+    ];
+
+    static (string val, string label)[] ConditionOptions =>
+    [
+        ("New",  AppStrings.Common.ConditionNew),
+        ("Good", AppStrings.Common.ConditionGood),
+        ("Fair", AppStrings.Common.ConditionFair),
+        ("Poor", AppStrings.Common.ConditionPoor),
+    ];
+
+    // ── Labels dinámicos ──────────────────────────────────────────────────────
+
+    string TypeLabel => filterType == ""
+        ? AppStrings.Collection.FilterAllTypes
+        : filterType == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole;
+
+    string PlatformLabel => filterPlatforms.Count == 0
+        ? AppStrings.Collection.FilterAllPlatforms
+        : filterPlatforms.First();
+
+    string RegionLabel => filterRegions.Count == 0
+        ? AppStrings.Collection.FilterAllRegions
+        : filterRegions.First();
+
+    // ── Chips activos ─────────────────────────────────────────────────────────
+
+    IEnumerable<(string key, string value, string label)> ActiveChips
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(filterType))
+                yield return ("type", filterType, TypeLabel);
+
+            foreach (var p in filterPlatforms.OrderBy(x => x))
+                yield return ("platform", p, p);
+
+            foreach (var r in filterRegions.OrderBy(x => x))
+            {
+                var lbl = RegionOptions.FirstOrDefault(x => x.val == r).label ?? r;
+                yield return ("region", r, lbl);
+            }
+
+            if (!string.IsNullOrEmpty(filterCondition))
+                yield return ("condition", filterCondition, TranslateCondition(filterCondition));
+        }
+    }
+
+    // ── Ciclo de vida ─────────────────────────────────────────────────────────
 
     protected override async Task OnInitializedAsync() => await LoadItems();
 
     async Task LoadItems()
     {
-        var url = BuildUrl();
-        items = await Http.GetFromJsonAsync<List<CollectionItemDto>>(url) ?? [];
+        items = await Http.GetFromJsonAsync<List<CollectionItemDto>>(BuildUrl()) ?? [];
+
         platforms = items.Select(i => i.Platform)
                          .Where(p => !string.IsNullOrEmpty(p))
+                         .Union(filterPlatforms)
                          .Distinct()
                          .OrderBy(p => p)
                          .ToList();
+
+        StateHasChanged();
     }
 
     string BuildUrl()
     {
         var q = new List<string> { "status=Owned" };
-        if (!string.IsNullOrWhiteSpace(searchTerm))      q.Add($"search={Uri.EscapeDataString(searchTerm)}");
-        if (!string.IsNullOrWhiteSpace(filterType))      q.Add($"type={filterType}");
-        if (!string.IsNullOrWhiteSpace(filterPlatform))  q.Add($"platform={Uri.EscapeDataString(filterPlatform)}");
-        if (!string.IsNullOrWhiteSpace(filterRegion))    q.Add($"region={filterRegion}");
-        if (!string.IsNullOrWhiteSpace(filterCondition)) q.Add($"condition={filterCondition}");
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+            q.Add($"search={Uri.EscapeDataString(searchTerm)}");
+
+        if (!string.IsNullOrWhiteSpace(filterType))
+            q.Add($"type={filterType}");
+
+        foreach (var p in filterPlatforms)
+            q.Add($"platform={Uri.EscapeDataString(p)}");
+
+        foreach (var r in filterRegions)
+            q.Add($"region={Uri.EscapeDataString(r)}");
+
+        if (!string.IsNullOrWhiteSpace(filterCondition))
+            q.Add($"condition={filterCondition}");
+
         q.Add($"sortBy={sortBy}&desc={descending.ToString().ToLower()}");
         return "api/items?" + string.Join("&", q);
     }
 
+    // ── Interacciones ─────────────────────────────────────────────────────────
+
     async Task OnFilterChanged() => await LoadItems();
-    void ToggleSort() { descending = !descending; _ = LoadItems(); }
+
+    async Task ToggleSort()
+    {
+        descending = !descending;
+        await LoadItems();
+    }
+
+    void ToggleDropdown(string name)
+        => openDropdown = openDropdown == name ? null : name;
+
+    void CloseDropdown() => openDropdown = null;
+
+    async Task SetSingleFilter(string key, string value)
+    {
+        if (key == "type")      filterType      = value;
+        if (key == "condition") filterCondition = value;
+        openDropdown = null;
+        await LoadItems();
+    }
+
+    async Task ToggleMultiFilter(HashSet<string> set, string value)
+    {
+        if (!set.Remove(value)) set.Add(value);
+        await LoadItems();
+    }
+
+    async Task ClearMultiFilter(HashSet<string> set)
+    {
+        set.Clear();
+        await LoadItems();
+    }
+
+    async Task RemoveChip(string key, string value)
+    {
+        switch (key)
+        {
+            case "type":      filterType = "";               break;
+            case "platform":  filterPlatforms.Remove(value); break;
+            case "region":    filterRegions.Remove(value);   break;
+            case "condition": filterCondition = "";          break;
+        }
+        await LoadItems();
+    }
+
+    async Task ClearAllFilters()
+    {
+        filterType      = "";
+        filterCondition = "";
+        filterPlatforms.Clear();
+        filterRegions.Clear();
+        await LoadItems();
+    }
+
+    async Task ClearSearch()
+    {
+        searchTerm = "";
+        await LoadItems();
+    }
 
     void AskDelete(CollectionItemDto item) => itemToDelete = item;
     void CancelDelete() => itemToDelete = null;

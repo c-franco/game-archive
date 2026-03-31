@@ -9,9 +9,9 @@ namespace GameArchive.Application.Features.Items.Queries;
 public record GetItemsQuery(
     string? Search,
     ItemType? Type,
-    string? Platform,
+    List<string>? Platforms,   // multi-select
     string? Condition,
-    string? Region,
+    List<string>? Regions,     // multi-select
     ItemStatus? Status,
     string SortBy = "name",
     bool Descending = false
@@ -28,11 +28,20 @@ public class GetItemsHandler(IAppDbContext db) : IRequestHandler<GetItemsQuery, 
         if (!string.IsNullOrWhiteSpace(q.Search))
             query = query.Where(i => i.Name.ToLower().Contains(q.Search.ToLower()));
 
-        if (q.Type.HasValue)        query = query.Where(i => i.Type == q.Type);
-        if (q.Status.HasValue)      query = query.Where(i => i.Status == q.Status);
-        if (!string.IsNullOrWhiteSpace(q.Platform))  query = query.Where(i => i.Platform == q.Platform);
-        if (!string.IsNullOrWhiteSpace(q.Condition)) query = query.Where(i => i.Condition == q.Condition);
-        if (!string.IsNullOrWhiteSpace(q.Region))    query = query.Where(i => i.Region == q.Region);
+        if (q.Type.HasValue)
+            query = query.Where(i => i.Type == q.Type);
+
+        if (q.Status.HasValue)
+            query = query.Where(i => i.Status == q.Status);
+
+        if (q.Platforms is { Count: > 0 })
+            query = query.Where(i => q.Platforms.Contains(i.Platform));
+
+        if (q.Regions is { Count: > 0 })
+            query = query.Where(i => q.Regions.Contains(i.Region));
+
+        if (!string.IsNullOrWhiteSpace(q.Condition))
+            query = query.Where(i => i.Condition == q.Condition);
 
         query = (q.SortBy.ToLower(), q.Descending) switch
         {

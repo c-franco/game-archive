@@ -14,9 +14,9 @@ public class ItemsController(IMediator mediator) : ControllerBase
     public Task<List<Application.DTOs.CollectionItemDto>> Get(
         [FromQuery] string? search,
         [FromQuery] ItemType? type,
-        [FromQuery] string? platform,
+        [FromQuery] List<string>? platform,   // acepta platform=SNES&platform=N64
         [FromQuery] string? condition,
-        [FromQuery] string? region,
+        [FromQuery] List<string>? region,     // acepta region=PAL&region=NTSC-U
         [FromQuery] ItemStatus? status,
         [FromQuery] string sortBy = "name",
         [FromQuery] bool desc = false)
