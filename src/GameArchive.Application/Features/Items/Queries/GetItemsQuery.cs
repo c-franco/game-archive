@@ -43,16 +43,37 @@ public class GetItemsHandler(IAppDbContext db) : IRequestHandler<GetItemsQuery, 
         if (!string.IsNullOrWhiteSpace(q.Condition))
             query = query.Where(i => i.Condition == q.Condition);
 
-        query = (q.SortBy.ToLower(), q.Descending) switch
+        var sortBy = q.SortBy.ToLowerInvariant();
+
+        if (sortBy is "price" or "value")
         {
-            ("price", false) => query.OrderBy(i => i.PurchasePrice),
-            ("price", true)  => query.OrderByDescending(i => i.PurchasePrice),
-            ("value", false) => query.OrderBy(i => i.EstimatedValue),
-            ("value", true)  => query.OrderByDescending(i => i.EstimatedValue),
-            ("date",  false) => query.OrderBy(i => i.PurchaseDate),
-            ("date",  true)  => query.OrderByDescending(i => i.PurchaseDate),
-            (_,       false) => query.OrderBy(i => i.Name),
-            (_,       true)  => query.OrderByDescending(i => i.Name),
+            var filteredItems = await query.ToListAsync(ct);
+            filteredItems = (sortBy, q.Descending) switch
+            {
+                ("price", false) => filteredItems.OrderBy(i => i.PurchasePrice ?? decimal.MaxValue)
+                                                 .ThenBy(i => i.Name)
+                                                 .ToList(),
+                ("price", true)  => filteredItems.OrderByDescending(i => i.PurchasePrice ?? decimal.MinValue)
+                                                 .ThenBy(i => i.Name)
+                                                 .ToList(),
+                ("value", false) => filteredItems.OrderBy(i => i.EstimatedValue ?? decimal.MaxValue)
+                                                 .ThenBy(i => i.Name)
+                                                 .ToList(),
+                ("value", true)  => filteredItems.OrderByDescending(i => i.EstimatedValue ?? decimal.MinValue)
+                                                 .ThenBy(i => i.Name)
+                                                 .ToList(),
+                _                => filteredItems
+            };
+
+            return filteredItems.Select(MapToDto).ToList();
+        }
+
+        query = (sortBy, q.Descending) switch
+        {
+            ("date", false) => query.OrderBy(i => i.PurchaseDate),
+            ("date", true)  => query.OrderByDescending(i => i.PurchaseDate),
+            (_,      false) => query.OrderBy(i => i.Name),
+            (_,      true)  => query.OrderByDescending(i => i.Name),
         };
 
         var items = await query.ToListAsync(ct);

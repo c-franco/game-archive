@@ -1,5 +1,6 @@
 @page "/collection"
 @inject HttpClient Http
+@inject IJSRuntime JS
 @inject NavigationManager Nav
 @using GameArchive.Web.Resources
 
@@ -28,7 +29,7 @@
 <div class="page-header">
     <div>
         <div class="page-title">@AppStrings.Collection.Title</div>
-        <div class="page-subtitle">@AppStrings.Collection.SubtitleFmt(items?.Count ?? 0)</div>
+        <div class="page-subtitle">@CollectionSubtitle</div>
     </div>
     <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>
         @AppStrings.Collection.AddItem
@@ -49,7 +50,7 @@
     </div>
 
     <div class="sort-group">
-        <select class="sort-select" @bind="sortBy" @bind:after="OnFilterChanged">
+        <select class="sort-select" @bind="sortBy" @bind:after="OnSortChanged">
             <option value="name">@AppStrings.Collection.SortName</option>
             <option value="date">@AppStrings.Collection.SortDate</option>
             <option value="price">@AppStrings.Collection.SortPrice</option>
@@ -300,6 +301,10 @@ else
 
     CollectionItemDto? itemToDelete;
 
+    const string SortByStorageKey     = "collection.sortBy";
+    const string SortDescStorageKey   = "collection.sortDesc";
+    static readonly HashSet<string> ValidSortFields = ["name", "date", "price", "value"];
+
     // ── Opciones estáticas ─────────────────────────────────────────────────────
 
     static (string val, string label)[] RegionOptions =>
@@ -332,6 +337,10 @@ else
         ? AppStrings.Collection.FilterAllRegions
         : filterRegions.First();
 
+    string CollectionSubtitle => items is null
+        ? string.Empty
+        : AppStrings.Collection.SubtitleFmt(items.Count);
+
     // ── Chips activos ─────────────────────────────────────────────────────────
 
     IEnumerable<(string key, string value, string label)> ActiveChips
@@ -357,18 +366,58 @@ else
 
     // ── Ciclo de vida ─────────────────────────────────────────────────────────
 
-    protected override async Task OnInitializedAsync() => await LoadItems();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await LoadSavedSortPreferences();
+        await LoadPlatforms();
+        await LoadItems();
+    }
+
+    async Task LoadSavedSortPreferences()
+    {
+        var savedSortBy = await JS.InvokeAsync<string?>("localStorage.getItem", SortByStorageKey);
+        if (!string.IsNullOrWhiteSpace(savedSortBy) && ValidSortFields.Contains(savedSortBy))
+            sortBy = savedSortBy;
+
+        var savedDescending = await JS.InvokeAsync<string?>("localStorage.getItem", SortDescStorageKey);
+        if (bool.TryParse(savedDescending, out var isDescending))
+            descending = isDescending;
+    }
+
+    async Task SaveSortPreferences()
+    {
+        await JS.InvokeVoidAsync("localStorage.setItem", SortByStorageKey, sortBy);
+        await JS.InvokeVoidAsync("localStorage.setItem", SortDescStorageKey, descending.ToString());
+    }
+
+    async Task LoadPlatforms()
+    {
+        var availablePlatforms = await Http.GetFromJsonAsync<List<PlatformDto>>("api/platforms") ?? [];
+
+        platforms = availablePlatforms
+            .Select(p => p.Name)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Union(filterPlatforms)
+            .Distinct()
+            .OrderBy(p => p)
+            .ToList();
+    }
 
     async Task LoadItems()
     {
         items = await Http.GetFromJsonAsync<List<CollectionItemDto>>(BuildUrl()) ?? [];
 
-        platforms = items.Select(i => i.Platform)
-                         .Where(p => !string.IsNullOrEmpty(p))
-                         .Union(filterPlatforms)
-                         .Distinct()
-                         .OrderBy(p => p)
-                         .ToList();
+        if (platforms.Count == 0)
+        {
+            platforms = items.Select(i => i.Platform)
+                             .Where(p => !string.IsNullOrWhiteSpace(p))
+                             .Union(filterPlatforms)
+                             .Distinct()
+                             .OrderBy(p => p)
+                             .ToList();
+        }
 
         StateHasChanged();
     }
@@ -400,9 +449,16 @@ else
 
     async Task OnFilterChanged() => await LoadItems();
 
+    async Task OnSortChanged()
+    {
+        await SaveSortPreferences();
+        await LoadItems();
+    }
+
     async Task ToggleSort()
     {
         descending = !descending;
+        await SaveSortPreferences();
         await LoadItems();
     }
 
