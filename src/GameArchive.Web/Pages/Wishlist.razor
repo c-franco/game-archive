@@ -1,4 +1,4 @@
-@page "/wishlist"
+﻿@page "/wishlist"
 @inject HttpClient Http
 @inject NavigationManager Nav
 @using GameArchive.Web.Resources
@@ -72,7 +72,6 @@ else if (!ShowAllItems && !HasSelectedPlatform)
         {
             <button class="wishlist-platform-card" @onclick="() => OpenPlatform(platform.Name)">
                 <div class="wishlist-platform-top">
-                    <span class="wishlist-platform-kicker">Plataforma</span>
                     <span class="wishlist-platform-total">@platform.Count</span>
                 </div>
                 <div class="wishlist-platform-name">@platform.Name</div>
@@ -100,28 +99,38 @@ else
         @foreach (var item in DisplayItems)
         {
             <div class="wish-card" @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>
-                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div class="wish-card-top">
                     <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">
                         @(item.Type == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole)
                     </span>
-                    <button class="btn btn-danger btn-sm"
-                            @onclick:stopPropagation @onclick="() => AskDelete(item)">×</button>
+                    <div class="wish-card-icon-actions">
+                        <button class="btn btn-secondary btn-sm wish-card-icon-button"
+                                title="Marcar como adquirido"
+                                aria-label="Marcar como adquirido"
+                                @onclick:stopPropagation @onclick="() => MarkOwned(item)">
+                            ✓
+                        </button>
+                        <button class="btn btn-danger btn-sm wish-card-icon-button"
+                                title="Eliminar de deseados"
+                                aria-label="Eliminar de deseados"
+                                @onclick:stopPropagation @onclick="() => AskDelete(item)">
+                            ✕
+                        </button>
+                    </div>
                 </div>
                 <div class="wish-card-title">@item.Name</div>
-                <div class="wish-card-meta">@item.Platform · @item.Region</div>
-                @if (item.EstimatedValue.HasValue)
-                {
-                    <div class="wish-card-value">€@item.EstimatedValue.Value.ToString("F2")</div>
-                }
-                @if (!string.IsNullOrWhiteSpace(item.Notes))
-                {
-                    <div class="wish-card-notes">@item.Notes</div>
-                }
-                <div style="margin-top:14px">
-                    <button class="btn btn-secondary btn-sm"
-                            @onclick:stopPropagation @onclick="() => MarkOwned(item)">
-                        @AppStrings.Wishlist.MarkOwned
-                    </button>
+                <div class="wish-card-meta">
+                    @if (ShowAllItems)
+                    {
+                        <span>@item.Platform</span>
+                        <span class="wish-card-meta-separator">·</span>
+                    }
+                    <span>@item.Region</span>
+                    @if (item.EstimatedValue.HasValue)
+                    {
+                        <span class="wish-card-meta-separator">·</span>
+                        <span class="wish-card-value">€@item.EstimatedValue.Value.ToString("F2")</span>
+                    }
                 </div>
             </div>
         }
@@ -225,8 +234,9 @@ else
             parts.Add($"{platform.GameCount} juego{(platform.GameCount == 1 ? "" : "s")}");
         if (platform.ConsoleCount > 0)
             parts.Add($"{platform.ConsoleCount} consola{(platform.ConsoleCount == 1 ? "" : "s")}");
-        return string.Join(" · ", parts);
+        return string.Join(" Â· ", parts);
     }
 
     record PlatformWishlistGroup(string Name, int Count, int GameCount, int ConsoleCount);
 }
+

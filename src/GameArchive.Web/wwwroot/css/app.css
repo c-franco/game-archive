@@ -579,25 +579,21 @@ td {
     transform: translateY(-3px);
 }
 .wishlist-platform-top {
-    align-items: center;
+    align-items: flex-start;
     display: flex;
-    justify-content: space-between;
-}
-.wishlist-platform-kicker {
-    color: var(--text-3);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    justify-content: flex-end;
+    min-height: 52px;
 }
 .wishlist-platform-total {
     color: var(--accent);
     font-family: 'Space Mono', monospace;
-    font-size: 1.1rem;
+    font-size: 1.65rem;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
 }
 .wishlist-platform-name {
-    font-size: 1.2rem;
+    font-size: 1.28rem;
     font-weight: 700;
     line-height: 1.2;
     margin-top: auto;
@@ -606,12 +602,13 @@ td {
     color: var(--text-2);
     font-size: 0.84rem;
     line-height: 1.5;
+    max-width: 18ch;
 }
 .wish-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 20px;
+    padding: 16px;
     cursor: pointer;
     transition: all var(--transition);
 }
@@ -620,10 +617,47 @@ td {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
-.wish-card-title { font-weight: 600; font-size: 1rem; margin: 8px 0 4px; }
-.wish-card-meta { color: var(--text-2); font-size: 0.8rem; }
-.wish-card-value { color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; margin-top: 12px; }
-.wish-card-notes { color: var(--text-2); font-size: 0.8rem; margin-top: 8px; font-style: italic; }
+.wish-card-top {
+    align-items: flex-start;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+.wish-card-icon-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+}
+.wish-card-icon-button {
+    align-items: center;
+    height: 30px;
+    justify-content: center;
+    min-width: 30px;
+    padding: 0;
+}
+.wish-card-title {
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.3;
+    margin: 14px 0 4px;
+}
+.wish-card-meta {
+    align-items: center;
+    color: var(--text-2);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    gap: 6px;
+    line-height: 1.4;
+}
+.wish-card-meta-separator {
+    color: var(--text-3);
+}
+.wish-card-value {
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+}
 
 /* ── Settings ──────────────────────────────────────────────────────────────── */
 
