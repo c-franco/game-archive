@@ -27,7 +27,8 @@ public class GetStatsHandler(IAppDbContext db) : IRequestHandler<GetStatsQuery, 
             TotalItems:          items.Count,
             TotalOwned:          items.Count(i => i.Status == ItemStatus.Owned),
             TotalWishlist:       items.Count(i => i.Status == ItemStatus.Wishlist),
-            TotalEstimatedValue: items.Where(i => i.EstimatedValue.HasValue).Sum(i => i.EstimatedValue!.Value),
+            TotalEstimatedValue: items.Where(i => i.EstimatedValue.HasValue && i.Status == ItemStatus.Owned)
+                                      .Sum(i => i.EstimatedValue!.Value),
             TotalSpent:          items.Where(i => i.PurchasePrice.HasValue && i.Status == ItemStatus.Owned).Sum(i => i.PurchasePrice!.Value),
             ByType:              items.GroupBy(i => i.Type.ToString()).ToDictionary(g => g.Key, g => g.Count()),
             ByPlatform:          items.Where(i => !string.IsNullOrEmpty(i.Platform))
