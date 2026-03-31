@@ -274,6 +274,12 @@ else
                 ? await resp.Content.ReadFromJsonAsync<ImportResultDto>()
                 : new ImportResultDto(0, 0,
                     [AppStrings.Settings.ImportServerErrorFmt((int)resp.StatusCode)]);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                var settings = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
+                if (settings is not null) BuildLocalState(settings);
+            }
         }
         catch (Exception ex)
         {
