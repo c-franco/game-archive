@@ -13,7 +13,7 @@ public static class AppStrings
         public const string BrandName    = "GameArchive";
         public const string Dashboard    = "Dashboard";
         public const string Collection   = "Colección";
-        public const string Wishlist     = "Lista de deseos";
+        public const string Wishlist     = "Lista de deseados";
         public const string Settings     = "Ajustes";
     }
 
@@ -29,14 +29,14 @@ public static class AppStrings
         public const string Back             = "← Volver";
         public const string Add              = "+ Añadir";
         public const string Confirm          = "Confirmar";
-        public const string GoHome           = "Go Home";        // 404 page (kept in English as per original)
-        public const string PageNotFound     = "Page not found"; // 404 page (kept in English as per original)
+        public const string GoHome           = "Go Home";        
+        public const string PageNotFound     = "Page not found"; 
 
         public const string TypeGame         = "Juego";
         public const string TypeConsole      = "Consola";
 
         public const string StatusOwned      = "Adquirido";
-        public const string StatusWishlist   = "Lista de deseos";
+        public const string StatusWishlist   = "Lista de deseados";
 
         public const string ConditionNew     = "Nuevo";
         public const string ConditionGood    = "Bueno";
@@ -59,7 +59,7 @@ public static class AppStrings
         public const string Title               = "Dashboard";
         public const string StatTotalItems      = "Total artículos";
         public const string StatOwned           = "Adquiridos";
-        public const string StatWishlist        = "Lista de deseos";
+        public const string StatWishlist        = "Lista de deseados";
         public const string StatEstimatedValue  = "Valor estimado";
         public const string StatTotalSpent      = "Total invertido";
         public const string ChartByType         = "Por tipo";
@@ -104,7 +104,7 @@ public static class AppStrings
     // ── Wishlist page ─────────────────────────────────────────────────────────
     public static class Wishlist
     {
-        public const string Title              = "Lista de deseos";
+        public const string Title              = "Lista de deseados";
         public static string SubtitleFmt(int count) => $"{count} artículos";
 
         public const string AddItem            = "+ Añadir a la lista";

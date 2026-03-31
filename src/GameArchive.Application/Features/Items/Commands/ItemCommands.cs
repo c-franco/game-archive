@@ -26,6 +26,9 @@ public class CreateItemHandler(IAppDbContext db) : IRequestHandler<CreateItemCom
 {
     public async Task<Guid> Handle(CreateItemCommand cmd, CancellationToken ct)
     {
+        var purchasePrice = cmd.Status == ItemStatus.Wishlist ? null : cmd.PurchasePrice;
+        var purchaseDate  = cmd.Status == ItemStatus.Wishlist ? null : cmd.PurchaseDate;
+
         var item = new CollectionItem
         {
             Name           = cmd.Name,
@@ -33,24 +36,27 @@ public class CreateItemHandler(IAppDbContext db) : IRequestHandler<CreateItemCom
             Platform       = cmd.Platform,
             Region         = cmd.Region,
             Condition      = cmd.Condition,
-            PurchasePrice  = cmd.PurchasePrice,
+            PurchasePrice  = purchasePrice,
             EstimatedValue = cmd.EstimatedValue,
-            PurchaseDate   = cmd.PurchaseDate,
+            PurchaseDate   = purchaseDate,
             Notes          = cmd.Notes,
             Status         = cmd.Status
         };
 
-        var templates = await db.ChecklistTemplates
-            .Where(t => t.ItemType == cmd.Type)
-            .OrderBy(t => t.SortOrder)
-            .ToListAsync(ct);
-
-        item.ChecklistEntries = templates.Select(t => new ChecklistEntry
+        if (cmd.Status == ItemStatus.Owned)
         {
-            Label     = t.Label,
-            IsChecked = false,
-            SortOrder = t.SortOrder
-        }).ToList();
+            var templates = await db.ChecklistTemplates
+                .Where(t => t.ItemType == cmd.Type)
+                .OrderBy(t => t.SortOrder)
+                .ToListAsync(ct);
+
+            item.ChecklistEntries = templates.Select(t => new ChecklistEntry
+            {
+                Label     = t.Label,
+                IsChecked = false,
+                SortOrder = t.SortOrder
+            }).ToList();
+        }
 
         db.Items.Add(item);
         await db.SaveChangesAsync(ct);
@@ -86,22 +92,47 @@ public class UpdateItemHandler(IAppDbContext db) : IRequestHandler<UpdateItemCom
             .FirstOrDefaultAsync(i => i.Id == cmd.Id, ct)
             ?? throw new KeyNotFoundException(ServerStrings.Items.NotFoundFmt(cmd.Id));
 
+        var purchasePrice = cmd.Status == ItemStatus.Wishlist ? null : cmd.PurchasePrice;
+        var purchaseDate  = cmd.Status == ItemStatus.Wishlist ? null : cmd.PurchaseDate;
+
         item.Name           = cmd.Name;
         item.Type           = cmd.Type;
         item.Platform       = cmd.Platform;
         item.Region         = cmd.Region;
         item.Condition      = cmd.Condition;
-        item.PurchasePrice  = cmd.PurchasePrice;
+        item.PurchasePrice  = purchasePrice;
         item.EstimatedValue = cmd.EstimatedValue;
-        item.PurchaseDate   = cmd.PurchaseDate;
+        item.PurchaseDate   = purchaseDate;
         item.Notes          = cmd.Notes;
         item.Status         = cmd.Status;
         item.UpdatedAt      = DateTimeOffset.UtcNow;
 
-        foreach (var update in cmd.ChecklistUpdates)
+        if (cmd.Status == ItemStatus.Wishlist)
         {
-            var entry = item.ChecklistEntries.FirstOrDefault(e => e.Id == update.EntryId);
-            if (entry is not null) entry.IsChecked = update.IsChecked;
+            item.ChecklistEntries.Clear();
+        }
+        else
+        {
+            if (item.ChecklistEntries.Count == 0)
+            {
+                var templates = await db.ChecklistTemplates
+                    .Where(t => t.ItemType == cmd.Type)
+                    .OrderBy(t => t.SortOrder)
+                    .ToListAsync(ct);
+
+                item.ChecklistEntries = templates.Select(t => new ChecklistEntry
+                {
+                    Label     = t.Label,
+                    IsChecked = false,
+                    SortOrder = t.SortOrder
+                }).ToList();
+            }
+
+            foreach (var update in cmd.ChecklistUpdates)
+            {
+                var entry = item.ChecklistEntries.FirstOrDefault(e => e.Id == update.EntryId);
+                if (entry is not null) entry.IsChecked = update.IsChecked;
+            }
         }
 
         await db.SaveChangesAsync(ct);
@@ -132,10 +163,34 @@ public class ToggleStatusHandler(IAppDbContext db) : IRequestHandler<ToggleStatu
 {
     public async Task<string> Handle(ToggleStatusCommand cmd, CancellationToken ct)
     {
-        var item = await db.Items.FindAsync([cmd.Id], ct)
+        var item = await db.Items
+            .Include(i => i.ChecklistEntries)
+            .FirstOrDefaultAsync(i => i.Id == cmd.Id, ct)
             ?? throw new KeyNotFoundException(ServerStrings.Items.NotFoundFmt(cmd.Id));
 
-        item.Status    = item.Status == ItemStatus.Owned ? ItemStatus.Wishlist : ItemStatus.Owned;
+        item.Status = item.Status == ItemStatus.Owned ? ItemStatus.Wishlist : ItemStatus.Owned;
+
+        if (item.Status == ItemStatus.Wishlist)
+        {
+            item.PurchasePrice = null;
+            item.PurchaseDate = null;
+            item.ChecklistEntries.Clear();
+        }
+        else if (item.ChecklistEntries.Count == 0)
+        {
+            var templates = await db.ChecklistTemplates
+                .Where(t => t.ItemType == item.Type)
+                .OrderBy(t => t.SortOrder)
+                .ToListAsync(ct);
+
+            item.ChecklistEntries = templates.Select(t => new ChecklistEntry
+            {
+                Label     = t.Label,
+                IsChecked = false,
+                SortOrder = t.SortOrder
+            }).ToList();
+        }
+
         item.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
         return item.Status.ToString();

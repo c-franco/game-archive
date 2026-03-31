@@ -80,9 +80,9 @@ else
                 </div>
 
                 <!-- Estado -->
-                <div class="form-group">
+                <div class="form-group form-group-readonly">
                     <label>@AppStrings.ItemDetail.FieldStatus</label>
-                    <select @bind="model.Status">
+                    <select class="input-readonly" @bind="model.Status" disabled>
                         <option value="Owned">@AppStrings.Common.StatusOwned</option>
                         <option value="Wishlist">@AppStrings.Common.StatusWishlist</option>
                     </select>
@@ -143,34 +143,37 @@ else
                     }
                 </div>
 
-                <!-- Fecha de compra -->
-                <div class="form-group">
-                    <label>@AppStrings.ItemDetail.FieldPurchaseDate</label>
-                    <input type="date"
-                           class="@(errors.ContainsKey("PurchaseDate") ? "input-error" : "")"
-                           @bind="model.PurchaseDate"
-                           @bind:after='() => ValidateField("PurchaseDate")'
-                           max="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                    @if (errors.TryGetValue("PurchaseDate", out var eDate))
-                    {
-                        <span class="field-error">@eDate</span>
-                    }
-                </div>
+                @if (!IsWishlistItem)
+                {
+                    <!-- Fecha de compra -->
+                    <div class="form-group">
+                        <label>@AppStrings.ItemDetail.FieldPurchaseDate</label>
+                        <input type="date"
+                               class="@(errors.ContainsKey("PurchaseDate") ? "input-error" : "")"
+                               @bind="model.PurchaseDate"
+                               @bind:after='() => ValidateField("PurchaseDate")'
+                               max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        @if (errors.TryGetValue("PurchaseDate", out var eDate))
+                        {
+                            <span class="field-error">@eDate</span>
+                        }
+                    </div>
 
-                <!-- Precio de compra -->
-                <div class="form-group">
-                    <label>@AppStrings.ItemDetail.FieldPurchasePrice</label>
-                    <input type="number" step="0.01" min="0"
-                           class="@(errors.ContainsKey("PurchasePrice") ? "input-error" : "")"
-                           @bind="model.PurchasePrice"
-                           @bind:event="oninput"
-                           @onblur='() => ValidateField("PurchasePrice")'
-                           placeholder="@AppStrings.ItemDetail.PricePlaceholder" />
-                    @if (errors.TryGetValue("PurchasePrice", out var ePrice))
-                    {
-                        <span class="field-error">@ePrice</span>
-                    }
-                </div>
+                    <!-- Precio de compra -->
+                    <div class="form-group">
+                        <label>@AppStrings.ItemDetail.FieldPurchasePrice</label>
+                        <input type="number" step="0.01" min="0"
+                               class="@(errors.ContainsKey("PurchasePrice") ? "input-error" : "")"
+                               @bind="model.PurchasePrice"
+                               @bind:event="oninput"
+                               @onblur='() => ValidateField("PurchasePrice")'
+                               placeholder="@AppStrings.ItemDetail.PricePlaceholder" />
+                        @if (errors.TryGetValue("PurchasePrice", out var ePrice))
+                        {
+                            <span class="field-error">@ePrice</span>
+                        }
+                    </div>
+                }
 
                 <!-- Valor estimado (opcional) -->
                 <div class="form-group">
@@ -215,6 +218,8 @@ else
             </div>
         </div>
 
+        @if (!IsWishlistItem)
+        {
         <!-- Checklist -->
         <div class="card">
             <div style="font-weight:600;margin-bottom:14px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">
@@ -245,6 +250,7 @@ else
                 </div>
             }
         </div>
+        }
 
     </div>
 }
@@ -254,6 +260,7 @@ else
     [SupplyParameterFromQuery] public bool Wishlist { get; set; }
 
     bool IsNew => Id == null;
+    bool IsWishlistItem => model.Status == "Wishlist";
     bool loading = true, saving = false;
     bool showDeleteModal = false;
     string errorMsg = "", successMsg = "";
@@ -294,6 +301,8 @@ else
                 break;
 
             case "PurchaseDate":
+                if (IsWishlistItem)
+                    break;
                 if (!model.PurchaseDate.HasValue)
                     errors["PurchaseDate"] = AppStrings.ItemDetail.ValidationDateRequired;
                 else if (model.PurchaseDate.Value.Date > DateTime.Today)
@@ -301,6 +310,8 @@ else
                 break;
 
             case "PurchasePrice":
+                if (IsWishlistItem)
+                    break;
                 if (!model.PurchasePrice.HasValue)
                     errors["PurchasePrice"] = AppStrings.ItemDetail.ValidationPriceRequired;
                 else if (model.PurchasePrice.Value < 0)
@@ -316,8 +327,15 @@ else
 
     bool ValidateAll()
     {
-        foreach (var field in new[] { "Name", "Platform", "Region", "Condition",
-                                       "PurchaseDate", "PurchasePrice", "EstimatedValue" })
+        var fields = new List<string> { "Name", "Platform", "Region", "Condition", "EstimatedValue" };
+
+        if (!IsWishlistItem)
+        {
+            fields.Add("PurchaseDate");
+            fields.Add("PurchasePrice");
+        }
+
+        foreach (var field in fields)
             ValidateField(field);
         return errors.Count == 0;
     }
@@ -359,11 +377,14 @@ else
                     })
                     .ToList()
             };
+
+            ApplyStatusRules();
         }
         else
         {
             availablePlatforms = await platformsTask ?? [];
-            if (Wishlist) model.Status = "Wishlist";
+            model.Status = Wishlist ? "Wishlist" : "Owned";
+            ApplyStatusRules();
             await LoadChecklistTemplate();
         }
 
@@ -372,6 +393,12 @@ else
 
     async Task LoadChecklistTemplate()
     {
+        if (IsWishlistItem)
+        {
+            model.ChecklistEntries = [];
+            return;
+        }
+
         var templates = await Http.GetFromJsonAsync<List<ChecklistTemplateDto>>("api/templates") ?? [];
         model.ChecklistEntries = templates
             .Where(t => t.ItemType == model.Type)
@@ -389,6 +416,18 @@ else
         if (IsNew) await LoadChecklistTemplate();
     }
 
+    void ApplyStatusRules()
+    {
+        if (!IsWishlistItem)
+            return;
+
+        model.PurchaseDate = null;
+        model.PurchasePrice = null;
+        model.ChecklistEntries = [];
+        errors.Remove("PurchaseDate");
+        errors.Remove("PurchasePrice");
+    }
+
     // ── Save ──────────────────────────────────────────────────────────────────
 
     async Task Save()
@@ -404,7 +443,12 @@ else
 
         saving = true;
 
-        var purchaseDate = DateOnly.FromDateTime(model.PurchaseDate!.Value);
+        ApplyStatusRules();
+
+        var purchaseDate = model.PurchaseDate.HasValue
+            ? DateOnly.FromDateTime(model.PurchaseDate.Value)
+            : (DateOnly?)null;
+        var purchasePrice = IsWishlistItem ? null : model.PurchasePrice;
 
         if (IsNew)
         {
@@ -415,7 +459,7 @@ else
                 model.Platform,
                 model.Region,
                 model.Condition,
-                model.PurchasePrice,
+                PurchasePrice  = purchasePrice,
                 model.EstimatedValue,
                 PurchaseDate   = purchaseDate,
                 model.Notes,
@@ -441,7 +485,7 @@ else
                 model.Platform,
                 model.Region,
                 model.Condition,
-                model.PurchasePrice,
+                PurchasePrice  = purchasePrice,
                 model.EstimatedValue,
                 PurchaseDate   = purchaseDate,
                 model.Notes,
