@@ -107,7 +107,7 @@ public static class AppStrings
         public const string Title              = "Lista de deseados";
         public static string SubtitleFmt(int count) => $"{count} artículos";
 
-        public const string AddItem            = "+ Añadir a la lista";
+        public const string AddItem            = "+ Añadir a deseados";
         public const string SearchPlaceholder  = "Buscar en la lista…";
         public const string FilterAllTypes     = "Todos los tipos";
         public const string MarkOwned          = "✓ Marcar como adquirido";
