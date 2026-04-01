@@ -352,17 +352,15 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var settingsTask = Http.GetFromJsonAsync<SettingsDto>("api/settings");
-
         if (!IsNew)
         {
-            var itemTask = Http.GetFromJsonAsync<CollectionItemDto>($"api/items/{Id}");
-            await Task.WhenAll(settingsTask, itemTask);
+            var context = await Http.GetFromJsonAsync<ItemEditContextDto>($"api/items/{Id}/edit-context");
+            if (context == null) { Nav.NavigateTo("/"); return; }
 
-            ApplySettings(settingsTask.Result);
+            availablePlatforms = context.Platforms ?? [];
+            availableRegions = context.Regions ?? [];
 
-            var item = itemTask.Result;
-            if (item == null) { Nav.NavigateTo("/"); return; }
+            var item = context.Item;
 
             model = new ItemFormModel
             {
@@ -390,6 +388,7 @@ else
         }
         else
         {
+            var settingsTask = Http.GetFromJsonAsync<SettingsDto>("api/settings");
             ApplySettings(await settingsTask);
             model.Status = Wishlist ? "Wishlist" : "Owned";
             // Pre-seleccionar la plataforma si venimos desde una vista de plataforma
@@ -523,6 +522,10 @@ else
     }
 
     record CreateResult(Guid Id);
+    record ItemEditContextDto(
+        CollectionItemDto Item,
+        List<PlatformDto> Platforms,
+        List<RegionDto> Regions);
     record SettingsDto(
         List<ChecklistTemplateDto> Templates,
         List<PlatformDto> Platforms,

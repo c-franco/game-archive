@@ -29,6 +29,13 @@ public class ItemsController(IMediator mediator) : ControllerBase
         return item is null ? NotFound() : Ok(item);
     }
 
+    [HttpGet("{id:guid}/edit-context")]
+    public async Task<IActionResult> GetEditContext(Guid id)
+    {
+        var context = await mediator.Send(new GetItemEditContextQuery(id));
+        return context is null ? NotFound() : Ok(context);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateItemCommand cmd)
     {
