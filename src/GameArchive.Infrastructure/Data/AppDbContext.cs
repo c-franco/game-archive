@@ -11,6 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ChecklistTemplate> ChecklistTemplates  => Set<ChecklistTemplate>();
     public DbSet<ChecklistEntry>    ChecklistEntries    => Set<ChecklistEntry>();
     public DbSet<Platform>          Platforms           => Set<Platform>();
+    public DbSet<Region>            Regions             => Set<Region>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -39,6 +40,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         });
 
         b.Entity<Platform>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).IsRequired().HasMaxLength(100);
+        });
+
+        b.Entity<Region>(e =>
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.Name).IsRequired().HasMaxLength(100);
@@ -84,6 +91,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             new Platform { Id = Guid.Parse("22222222-0000-0000-0000-000000000025"), Name = "Sega Saturn",      SortOrder = 25 },
             new Platform { Id = Guid.Parse("22222222-0000-0000-0000-000000000026"), Name = "Sega Dreamcast",   SortOrder = 26 },
             new Platform { Id = Guid.Parse("22222222-0000-0000-0000-000000000027"), Name = "PC",               SortOrder = 27 }
+        );
+
+        // Seed default regions
+        b.Entity<Region>().HasData(
+            new Region { Id = Guid.Parse("33333333-0000-0000-0000-000000000001"), Name = "PAL",     SortOrder = 1 },
+            new Region { Id = Guid.Parse("33333333-0000-0000-0000-000000000002"), Name = "NTSC-U",  SortOrder = 2 },
+            new Region { Id = Guid.Parse("33333333-0000-0000-0000-000000000003"), Name = "NTSC-J",  SortOrder = 3 },
+            new Region { Id = Guid.Parse("33333333-0000-0000-0000-000000000004"), Name = "NTSC",    SortOrder = 4 },
+            new Region { Id = Guid.Parse("33333333-0000-0000-0000-000000000005"), Name = "Unknown", SortOrder = 5 }
         );
     }
 }

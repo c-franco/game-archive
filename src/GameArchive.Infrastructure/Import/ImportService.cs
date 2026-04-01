@@ -61,6 +61,14 @@ public class ImportService(IAppDbContext db)
                     SortOrder = r.SortOrder ?? 0
                 })
                 .ToList(),
+            Regions = rawRows
+                .Where(r => NormalizeRecordType(r.RecordType) == "region")
+                .Select(r => new ImportRegionRow
+                {
+                    Name = r.Name,
+                    SortOrder = r.SortOrder ?? 0
+                })
+                .ToList(),
             ChecklistTemplates = rawRows
                 .Where(r => NormalizeRecordType(r.RecordType) == "checklist-template")
                 .Select(r => new ImportChecklistTemplateRow
@@ -223,6 +231,7 @@ public class ImportService(IAppDbContext db)
             return;
 
         var existingPlatforms = await db.Platforms.ToListAsync();
+        var existingRegions = await db.Regions.ToListAsync();
         var existingTemplates = await db.ChecklistTemplates.ToListAsync();
         var changed = false;
 
@@ -249,6 +258,32 @@ public class ImportService(IAppDbContext db)
 
             db.Platforms.Add(entity);
             existingPlatforms.Add(entity);
+            changed = true;
+        }
+
+        foreach (var region in settings.Regions ?? [])
+        {
+            var name = region.Name?.Trim();
+            if (string.IsNullOrWhiteSpace(name))
+                continue;
+
+            var exists = existingRegions.Any(r =>
+                string.Equals(r.Name.Trim(), name, StringComparison.OrdinalIgnoreCase));
+            if (exists)
+                continue;
+
+            var sortOrder = region.SortOrder > 0
+                ? region.SortOrder
+                : existingRegions.Select(r => r.SortOrder).DefaultIfEmpty(0).Max() + 1;
+
+            var entity = new Region
+            {
+                Name = name,
+                SortOrder = sortOrder
+            };
+
+            db.Regions.Add(entity);
+            existingRegions.Add(entity);
             changed = true;
         }
 
@@ -412,6 +447,7 @@ public class ImportService(IAppDbContext db)
     private class ImportSettingsPayload
     {
         public List<ImportPlatformRow>? Platforms { get; set; }
+        public List<ImportRegionRow>? Regions { get; set; }
         public List<ImportChecklistTemplateRow>? ChecklistTemplates { get; set; }
     }
 
@@ -425,6 +461,12 @@ public class ImportService(IAppDbContext db)
     {
         public string? ItemType { get; set; }
         public string? Label { get; set; }
+        public int SortOrder { get; set; }
+    }
+
+    private class ImportRegionRow
+    {
+        public string? Name { get; set; }
         public int SortOrder { get; set; }
     }
 

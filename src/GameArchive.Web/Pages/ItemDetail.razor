@@ -113,11 +113,10 @@ else
                             @bind="model.Region"
                             @bind:after='() => ValidateField("Region")'>
                         <option value="">@AppStrings.Common.SelectPlaceholder</option>
-                        <option value="PAL">@AppStrings.Common.RegionPal</option>
-                        <option value="NTSC-U">@AppStrings.Common.RegionNtscU</option>
-                        <option value="NTSC-J">@AppStrings.Common.RegionNtscJ</option>
-                        <option value="NTSC">@AppStrings.Common.RegionNtsc</option>
-                        <option value="Unknown">@AppStrings.Common.RegionUnknown</option>
+                        @foreach (var r in availableRegions)
+                        {
+                            <option value="@r.Name">@r.Name</option>
+                        }
                     </select>
                     @if (errors.TryGetValue("Region", out var eRegion))
                     {
@@ -275,6 +274,8 @@ else
 
     ItemFormModel      model              = new();
     List<PlatformDto>  availablePlatforms = [];
+    List<RegionDto>    availableRegions   = [];
+    List<ChecklistTemplateDto> availableTemplates = [];
     Dictionary<string, string> errors     = new();
 
     // ── Validation ────────────────────────────────────────────────────────────
@@ -351,14 +352,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var platformsTask = Http.GetFromJsonAsync<List<PlatformDto>>("api/platforms");
+        var settingsTask = Http.GetFromJsonAsync<SettingsDto>("api/settings");
 
         if (!IsNew)
         {
             var itemTask = Http.GetFromJsonAsync<CollectionItemDto>($"api/items/{Id}");
-            await Task.WhenAll(platformsTask, itemTask);
+            await Task.WhenAll(settingsTask, itemTask);
 
-            availablePlatforms = platformsTask.Result ?? [];
+            ApplySettings(settingsTask.Result);
 
             var item = itemTask.Result;
             if (item == null) { Nav.NavigateTo("/"); return; }
@@ -389,7 +390,7 @@ else
         }
         else
         {
-            availablePlatforms = await platformsTask ?? [];
+            ApplySettings(await settingsTask);
             model.Status = Wishlist ? "Wishlist" : "Owned";
             // Pre-seleccionar la plataforma si venimos desde una vista de plataforma
             if (!string.IsNullOrWhiteSpace(ReturnPlatform))
@@ -401,16 +402,15 @@ else
         loading = false;
     }
 
-    async Task LoadChecklistTemplate()
+    Task LoadChecklistTemplate()
     {
         if (IsWishlistItem)
         {
             model.ChecklistEntries = [];
-            return;
+            return Task.CompletedTask;
         }
 
-        var templates = await Http.GetFromJsonAsync<List<ChecklistTemplateDto>>("api/templates") ?? [];
-        model.ChecklistEntries = templates
+        model.ChecklistEntries = availableTemplates
             .Where(t => t.ItemType == model.Type)
             .OrderBy(t => t.SortOrder)
             .Select(t => new ChecklistEntryForm
@@ -419,6 +419,7 @@ else
                 IsChecked = false, SortOrder = t.SortOrder
             })
             .ToList();
+        return Task.CompletedTask;
     }
 
     async Task OnTypeChanged()
@@ -522,4 +523,15 @@ else
     }
 
     record CreateResult(Guid Id);
+    record SettingsDto(
+        List<ChecklistTemplateDto> Templates,
+        List<PlatformDto> Platforms,
+        List<RegionDto> Regions);
+
+    void ApplySettings(SettingsDto? settings)
+    {
+        availableTemplates = settings?.Templates ?? [];
+        availablePlatforms = settings?.Platforms ?? [];
+        availableRegions = settings?.Regions ?? [];
+    }
 }

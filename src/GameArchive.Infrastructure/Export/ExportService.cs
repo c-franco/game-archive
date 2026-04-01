@@ -25,6 +25,10 @@ public class ExportService(IAppDbContext db)
             .OrderBy(p => p.SortOrder)
             .ThenBy(p => p.Name)
             .ToListAsync();
+        var regions = await db.Regions
+            .OrderBy(r => r.SortOrder)
+            .ThenBy(r => r.Name)
+            .ToListAsync();
         var templates = await db.ChecklistTemplates
             .OrderBy(t => t.ItemType)
             .ThenBy(t => t.SortOrder)
@@ -59,6 +63,13 @@ public class ExportService(IAppDbContext db)
             Name       = p.Name,
             SortOrder  = p.SortOrder
         }))
+        .Concat(regions.Select(r => new ExportCsvRow
+        {
+            RecordType = "region",
+            Id         = r.Id,
+            Name       = r.Name,
+            SortOrder  = r.SortOrder
+        }))
         .Concat(templates.Select(t => new ExportCsvRow
         {
             RecordType = "checklist-template",
@@ -89,6 +100,16 @@ public class ExportService(IAppDbContext db)
                 p.Id,
                 p.Name,
                 p.SortOrder
+            })
+            .ToListAsync();
+        var regions = await db.Regions
+            .OrderBy(r => r.SortOrder)
+            .ThenBy(r => r.Name)
+            .Select(r => new
+            {
+                r.Id,
+                r.Name,
+                r.SortOrder
             })
             .ToListAsync();
         var templates = await db.ChecklistTemplates
@@ -125,6 +146,7 @@ public class ExportService(IAppDbContext db)
             Settings = new
             {
                 Platforms = platforms,
+                Regions = regions,
                 ChecklistTemplates = templates
             }
         };

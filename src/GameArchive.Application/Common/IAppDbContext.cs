@@ -9,5 +9,6 @@ public interface IAppDbContext
     DbSet<ChecklistTemplate> ChecklistTemplates  { get; }
     DbSet<ChecklistEntry>    ChecklistEntries    { get; }
     DbSet<Platform>          Platforms           { get; }
+    DbSet<Region>            Regions             { get; }
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

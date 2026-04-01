@@ -21,6 +21,7 @@ public record ChecklistEntryDto(Guid Id, string Label, bool IsChecked, int SortO
 public record ChecklistTemplateDto(Guid Id, string ItemType, string Label, int SortOrder);
 
 public record PlatformDto(Guid Id, string Name, int SortOrder);
+public record RegionDto(Guid Id, string Name, int SortOrder);
 
 public record StatsDto(
     int TotalItems,

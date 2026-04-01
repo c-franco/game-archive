@@ -221,6 +221,9 @@ public static class AppStrings
         public const string PlatformsSectionTitle    = "Plataformas";
         public const string PlatformsHint            = "Una plataforma por línea.";
         public const string PlatformsPlaceholder     = "Nintendo 64\nSNES\nPlayStation\n…";
+        public const string RegionsSectionTitle      = "Regiones";
+        public const string RegionsHint              = "Una región por línea.";
+        public const string RegionsPlaceholder       = "PAL\nNTSC-U\nNTSC-J\nNTSC\nUnknown";
 
         // Save button & feedback
         public const string SaveButton           = "Guardar ajustes";

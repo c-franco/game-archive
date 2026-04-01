@@ -8,7 +8,7 @@
     </div>
 </div>
 
-@if (localTemplates == null || platformsText == null)
+@if (localTemplates == null || platformsText == null || regionsText == null)
 {
     <div class="spinner-center"><div class="spinner"></div></div>
 }
@@ -135,6 +135,19 @@ else
                   placeholder="@AppStrings.Settings.PlatformsPlaceholder"></textarea>
     </div>
 
+    <!-- ── Regions ───────────────────────────────────────────────────────── -->
+    <div class="card" style="margin-bottom:20px">
+        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">
+            @AppStrings.Settings.RegionsSectionTitle
+        </div>
+        <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">
+            @AppStrings.Settings.RegionsHint
+        </div>
+        <textarea style="min-height:180px;font-family:'Space Mono',monospace;font-size:0.85rem;resize:vertical"
+                  @bind="regionsText"
+                  placeholder="@AppStrings.Settings.RegionsPlaceholder"></textarea>
+    </div>
+
     <!-- ── Save ──────────────────────────────────────────────────────────── -->
     <hr class="divider" />
 
@@ -155,6 +168,7 @@ else
 @code {
     List<TemplateRow>? localTemplates = null;
     string?            platformsText  = null;
+    string?            regionsText    = null;
 
     bool   saving    = false;
     string saveMsg   = "";
@@ -186,6 +200,7 @@ else
             .ToList();
 
         platformsText = string.Join("\n", s.Platforms.OrderBy(p => p.SortOrder).Select(p => p.Name));
+        regionsText = string.Join("\n", s.Regions.OrderBy(r => r.SortOrder).Select(r => r.Name));
     }
 
     List<TemplateRow> GetTemplateGroup(string itemType)
@@ -236,7 +251,14 @@ else
                     t.SortOrder
                 })
                 .ToList(),
-            Platforms = platforms
+            Platforms = platforms,
+            Regions = regionsText!
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select((name, i) => new { Name = name, SortOrder = i + 1 })
+                .ToList()
         };
 
         var resp = await Http.PutAsJsonAsync("api/settings", payload);
@@ -300,8 +322,9 @@ else
         public bool   IsNew     { get; set; }
     }
 
-    record SettingsDto(List<ChecklistTemplateDto> Templates, List<PlatformDto> Platforms);
+    record SettingsDto(List<ChecklistTemplateDto> Templates, List<PlatformDto> Platforms, List<RegionDto> Regions);
     record ChecklistTemplateDto(Guid Id, string ItemType, string Label, int SortOrder);
     record PlatformDto(Guid Id, string Name, int SortOrder);
+    record RegionDto(Guid Id, string Name, int SortOrder);
     record ImportResultDto(int Created, int Updated, List<string> Errors);
 }

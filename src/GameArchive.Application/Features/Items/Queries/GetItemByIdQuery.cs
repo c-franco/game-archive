@@ -11,18 +11,26 @@ public class GetItemByIdHandler(IAppDbContext db) : IRequestHandler<GetItemByIdQ
 {
     public async Task<CollectionItemDto?> Handle(GetItemByIdQuery q, CancellationToken ct)
     {
-        var i = await db.Items
-            .Include(x => x.ChecklistEntries)
-            .FirstOrDefaultAsync(x => x.Id == q.Id, ct);
-
-        if (i is null) return null;
-
-        return new CollectionItemDto(
-            i.Id, i.Name, i.Type.ToString(), i.Platform, i.Region, i.Condition,
-            i.PurchasePrice, i.EstimatedValue, i.PurchaseDate, i.Notes, i.Status.ToString(),
-            i.ChecklistEntries.Select(e => new ChecklistEntryDto(e.Id, e.Label, e.IsChecked, e.SortOrder))
-                              .OrderBy(e => e.SortOrder).ToList(),
-            i.CreatedAt
-        );
+        return await db.Items
+            .AsNoTracking()
+            .Where(i => i.Id == q.Id)
+            .Select(i => new CollectionItemDto(
+                i.Id,
+                i.Name,
+                i.Type.ToString(),
+                i.Platform,
+                i.Region,
+                i.Condition,
+                i.PurchasePrice,
+                i.EstimatedValue,
+                i.PurchaseDate,
+                i.Notes,
+                i.Status.ToString(),
+                i.ChecklistEntries
+                    .OrderBy(e => e.SortOrder)
+                    .Select(e => new ChecklistEntryDto(e.Id, e.Label, e.IsChecked, e.SortOrder))
+                    .ToList(),
+                i.CreatedAt))
+            .FirstOrDefaultAsync(ct);
     }
 }

@@ -325,6 +325,7 @@ else
 @code {
     List<CollectionItemDto>? items;
     List<string> platforms = [];
+    List<string> regions = [];
 
     string          searchTerm      = "";
     string          filterType      = "";
@@ -348,13 +349,8 @@ else
 
     // ── Opciones estáticas ─────────────────────────────────────────────────────
 
-    static (string val, string label)[] RegionOptions =>
-    [
-        ("PAL",    AppStrings.Common.RegionPal),
-        ("NTSC-U", AppStrings.Common.RegionNtscU),
-        ("NTSC-J", AppStrings.Common.RegionNtscJ),
-        ("NTSC",   AppStrings.Common.RegionNtsc),
-    ];
+    IEnumerable<(string val, string label)> RegionOptions
+        => regions.Select(r => (r, r));
 
     static (string val, string label)[] ConditionOptions =>
     [
@@ -438,6 +434,7 @@ else
         await LoadSavedSortPreferences();
         await LoadSavedPageSize();
         await LoadPlatforms();
+        await LoadRegions();
         await LoadItems();
     }
 
@@ -481,6 +478,19 @@ else
             .ToList();
     }
 
+    async Task LoadRegions()
+    {
+        var availableRegions = await Http.GetFromJsonAsync<List<RegionDto>>("api/regions") ?? [];
+
+        regions = availableRegions
+            .Select(r => r.Name)
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Union(filterRegions)
+            .Distinct()
+            .OrderBy(r => r)
+            .ToList();
+    }
+
     async Task LoadItems()
     {
         items = await Http.GetFromJsonAsync<List<CollectionItemDto>>(BuildUrl()) ?? [];
@@ -494,6 +504,16 @@ else
                              .Distinct()
                              .OrderBy(p => p)
                              .ToList();
+        }
+
+        if (regions.Count == 0)
+        {
+            regions = items.Select(i => i.Region)
+                           .Where(r => !string.IsNullOrWhiteSpace(r))
+                           .Union(filterRegions)
+                           .Distinct()
+                           .OrderBy(r => r)
+                           .ToList();
         }
 
         StateHasChanged();
