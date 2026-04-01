@@ -45,7 +45,7 @@ else
             </div>
             @foreach (var kv in stats.ByType.OrderByDescending(x => x.Value))
             {
-                var pct = stats.TotalItems > 0 ? (kv.Value * 100.0 / stats.TotalItems) : 0;
+                var pct = stats.TotalOwned > 0 ? (kv.Value * 100.0 / stats.TotalOwned) : 0;
                 var label = kv.Key == "Game" ? AppStrings.Common.TypeGame
                           : kv.Key == "Console" ? AppStrings.Common.TypeConsole
                           : kv.Key;
@@ -67,7 +67,7 @@ else
             </div>
             @foreach (var kv in stats.ByPlatform.OrderByDescending(x => x.Value).Take(8))
             {
-                var pct = stats.TotalItems > 0 ? (kv.Value * 100.0 / stats.TotalItems) : 0;
+                var pct = stats.TotalOwned > 0 ? (kv.Value * 100.0 / stats.TotalOwned) : 0;
                 <div style="margin-bottom:14px">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.875rem">
                         <span>@kv.Key</span>
