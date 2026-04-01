@@ -1,5 +1,6 @@
 @page "/wishlist"
 @inject HttpClient Http
+@inject IJSRuntime JS
 @inject NavigationManager Nav
 @using GameArchive.Web.Resources
 
@@ -145,6 +146,9 @@ else
     List<CollectionItemDto>? items;
     CollectionItemDto? itemToDelete;
     HashSet<Guid> markingOwnedIds = [];
+    bool hasLoadedSavedViewMode;
+
+    const string WishlistViewModeStorageKey = "wishlist.viewMode";
 
     bool ShowAllItems => string.Equals(ViewMode, "all", StringComparison.OrdinalIgnoreCase);
     bool HasSelectedPlatform => !string.IsNullOrWhiteSpace(SelectedPlatform);
@@ -174,12 +178,33 @@ else
     string WishlistSubtitle => items is null
         ? string.Empty
         : ShowAllItems
-            ? $"{items.Count} articulos en total"
+            ? $"{AppStrings.Common.ItemCountFmt(items.Count)} en total"
         : HasSelectedPlatform
-            ? $"{VisibleItems.Count} articulos en {SelectedPlatform}"
-            : $"{items.Count} articulos en total";
+            ? $"{AppStrings.Common.ItemCountFmt(VisibleItems.Count)} en {SelectedPlatform}"
+            : $"{AppStrings.Common.ItemCountFmt(items.Count)} en total";
 
     protected override async Task OnInitializedAsync() => await LoadItems();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || hasLoadedSavedViewMode)
+            return;
+
+        hasLoadedSavedViewMode = true;
+
+        if (ShowAllItems)
+        {
+            await SaveViewModePreference("all");
+            return;
+        }
+
+        if (HasSelectedPlatform)
+            return;
+
+        var savedMode = await LoadSavedViewModePreference();
+        if (string.Equals(savedMode, "all", StringComparison.OrdinalIgnoreCase))
+            Nav.NavigateTo("/wishlist?view=all", false);
+    }
 
     async Task LoadItems()
     {
@@ -207,8 +232,10 @@ else
     void BackToPlatforms()
         => Nav.NavigateTo("/wishlist");
 
-    void SetViewMode(bool showAll)
+    async Task SetViewMode(bool showAll)
     {
+        await SaveViewModePreference(showAll ? "all" : "platforms");
+
         if (showAll)
         {
             Nav.NavigateTo("/wishlist?view=all");
@@ -218,6 +245,30 @@ else
         Nav.NavigateTo(HasSelectedPlatform
             ? $"/wishlist?platform={Uri.EscapeDataString(SelectedPlatform!)}"
             : "/wishlist");
+    }
+
+    async Task<string?> LoadSavedViewModePreference()
+    {
+        try
+        {
+            return await JS.InvokeAsync<string?>("localStorage.getItem", WishlistViewModeStorageKey);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    async Task SaveViewModePreference(string mode)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", WishlistViewModeStorageKey, mode);
+        }
+        catch
+        {
+            // Ignore storage failures (private mode, unavailable storage, etc.)
+        }
     }
 
     async Task MarkOwned(CollectionItemDto item)

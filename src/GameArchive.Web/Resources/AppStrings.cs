@@ -39,6 +39,7 @@ public static class AppStrings
         public const string StatusWishlist   = "Lista de deseados";
 
         public const string ConditionNew     = "Nuevo";
+        public const string ConditionVeryGood = "Muy bueno";
         public const string ConditionGood    = "Bueno";
         public const string ConditionFair    = "Regular";
         public const string ConditionPoor    = "Malo";
@@ -51,6 +52,7 @@ public static class AppStrings
 
         public const string SelectPlaceholder = "— Seleccionar —";
         public const string Dash              = "—";
+        public static string ItemCountFmt(int count) => $"{count} articulo{(count == 1 ? string.Empty : "s")}";
     }
 
     // ── Dashboard page ────────────────────────────────────────────────────────
@@ -70,7 +72,7 @@ public static class AppStrings
     public static class Collection
     {
         public const string Title              = "Colección";
-        public static string SubtitleFmt(int count) => $"{count} artículos";
+        public static string SubtitleFmt(int count) => Common.ItemCountFmt(count);
 
         public const string AddItem            = "+ Añadir artículo";
         public const string SearchPlaceholder  = "Buscar por nombre…";
@@ -105,7 +107,7 @@ public static class AppStrings
     public static class Wishlist
     {
         public const string Title              = "Lista de deseados";
-        public static string SubtitleFmt(int count) => $"{count} artículos";
+        public static string SubtitleFmt(int count) => Common.ItemCountFmt(count);
 
         public const string AddItem            = "+ Añadir a deseados";
         public const string SearchPlaceholder  = "Buscar en la lista…";

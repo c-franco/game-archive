@@ -359,6 +359,7 @@ else
     static (string val, string label)[] ConditionOptions =>
     [
         ("New",  AppStrings.Common.ConditionNew),
+        ("VeryGood", AppStrings.Common.ConditionVeryGood),
         ("Good", AppStrings.Common.ConditionGood),
         ("Fair", AppStrings.Common.ConditionFair),
         ("Poor", AppStrings.Common.ConditionPoor),
@@ -398,7 +399,7 @@ else
 
     string PaginationSummary => items is null || items.Count == 0
         ? string.Empty
-        : $"{PageStartIndex}\u2013{PageEndIndex} de {items.Count} artículos";
+        : $"{PageStartIndex}\u2013{PageEndIndex} de {AppStrings.Common.ItemCountFmt(items.Count)}";
 
     IEnumerable<CollectionItemDto> VisibleItems => items?
         .Skip((currentPage - 1) * pageSize)
@@ -646,6 +647,7 @@ else
     static string TranslateCondition(string c) => c switch
     {
         "New"  => AppStrings.Common.ConditionNew,
+        "VeryGood" => AppStrings.Common.ConditionVeryGood,
         "Good" => AppStrings.Common.ConditionGood,
         "Fair" => AppStrings.Common.ConditionFair,
         "Poor" => AppStrings.Common.ConditionPoor,
