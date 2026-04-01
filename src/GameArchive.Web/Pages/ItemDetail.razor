@@ -258,13 +258,19 @@ else
 @code {
     [Parameter] public Guid? Id { get; set; }
     [SupplyParameterFromQuery] public bool Wishlist { get; set; }
+    [SupplyParameterFromQuery] public string? ReturnPlatform { get; set; }
 
     bool IsNew => Id == null;
     bool IsWishlistItem => model.Status == "Wishlist";
     bool loading = true, saving = false;
     bool showDeleteModal = false;
     string errorMsg = "", successMsg = "";
-    string BackUrl => model.Status == "Wishlist" ? "/wishlist" : "/collection";
+
+    string WishlistReturnUrl => !string.IsNullOrWhiteSpace(ReturnPlatform)
+        ? $"/wishlist?platform={Uri.EscapeDataString(ReturnPlatform)}"
+        : "/wishlist";
+
+    string BackUrl => model.Status == "Wishlist" ? WishlistReturnUrl : "/collection";
 
     ItemFormModel      model              = new();
     List<PlatformDto>  availablePlatforms = [];
@@ -384,6 +390,9 @@ else
         {
             availablePlatforms = await platformsTask ?? [];
             model.Status = Wishlist ? "Wishlist" : "Owned";
+            // Pre-seleccionar la plataforma si venimos desde una vista de plataforma
+            if (!string.IsNullOrWhiteSpace(ReturnPlatform))
+                model.Platform = ReturnPlatform;
             ApplyStatusRules();
             await LoadChecklistTemplate();
         }
@@ -470,7 +479,7 @@ else
 
             if (resp.IsSuccessStatusCode)
             {
-                Nav.NavigateTo(model.Status == "Wishlist" ? "/wishlist" : "/collection");
+                Nav.NavigateTo(model.Status == "Wishlist" ? WishlistReturnUrl : "/collection");
                 return;
             }
             errorMsg = AppStrings.ItemDetail.SaveErrorServer;
@@ -508,7 +517,7 @@ else
     {
         showDeleteModal = false;
         await Http.DeleteAsync($"api/items/{Id}");
-        Nav.NavigateTo(model.Status == "Wishlist" ? "/wishlist" : "/");
+        Nav.NavigateTo(model.Status == "Wishlist" ? WishlistReturnUrl : "/");
     }
 
     record CreateResult(Guid Id);

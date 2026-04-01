@@ -1,4 +1,4 @@
-﻿@page "/wishlist"
+@page "/wishlist"
 @inject HttpClient Http
 @inject NavigationManager Nav
 @using GameArchive.Web.Resources
@@ -42,7 +42,7 @@
                 @AppStrings.Common.Back
             </button>
         }
-        <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>
+        <button class="btn btn-primary" @onclick="NavigateToAddItem">
             @AppStrings.Wishlist.AddItem
         </button>
     </div>
@@ -59,7 +59,7 @@ else if (!items.Any())
             <div class="empty-icon">@AppStrings.Wishlist.EmptyIcon</div>
             <div class="empty-title">@AppStrings.Wishlist.EmptyTitle</div>
             <div class="empty-desc">@AppStrings.Wishlist.EmptyDesc</div>
-            <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new?wishlist=true")'>
+            <button class="btn btn-primary" @onclick="NavigateToAddItem">
                 @AppStrings.Wishlist.AddItem
             </button>
         </div>
@@ -98,7 +98,7 @@ else
     <div class="wishlist-grid">
         @foreach (var item in DisplayItems)
         {
-            <div class="wish-card" @onclick='() => Nav.NavigateTo($"/items/{item.Id}")'>
+            <div class="wish-card" @onclick='() => Nav.NavigateTo($"/items/{item.Id}?returnPlatform={Uri.EscapeDataString(SelectedPlatform ?? "")}")'>
                 <div class="wish-card-top">
                     <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">
                         @(item.Type == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole)
@@ -191,6 +191,14 @@ else
         }
     }
 
+    void NavigateToAddItem()
+    {
+        var url = HasSelectedPlatform
+            ? $"/items/new?wishlist=true&returnPlatform={Uri.EscapeDataString(SelectedPlatform!)}"
+            : "/items/new?wishlist=true";
+        Nav.NavigateTo(url);
+    }
+
     void OpenPlatform(string platform)
         => Nav.NavigateTo($"/wishlist?platform={Uri.EscapeDataString(platform)}");
 
@@ -234,9 +242,8 @@ else
             parts.Add($"{platform.GameCount} juego{(platform.GameCount == 1 ? "" : "s")}");
         if (platform.ConsoleCount > 0)
             parts.Add($"{platform.ConsoleCount} consola{(platform.ConsoleCount == 1 ? "" : "s")}");
-        return string.Join(" Â· ", parts);
+        return string.Join(" · ", parts);
     }
 
     record PlatformWishlistGroup(string Name, int Count, int GameCount, int ConsoleCount);
 }
-

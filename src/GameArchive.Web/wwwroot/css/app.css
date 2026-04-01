@@ -600,7 +600,7 @@ td {
 }
 .wishlist-platform-meta {
     color: var(--text-2);
-    font-size: 0.84rem;
+    font-size: 0.95rem;
     line-height: 1.5;
     max-width: 18ch;
 }
