@@ -3,6 +3,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @using GameArchive.Web.Resources
+@using System.Linq
 
 @if (itemToDelete != null)
 {
@@ -18,6 +19,12 @@
             </div>
         </div>
     </div>
+}
+
+@* Overlay invisible que cierra cualquier dropdown al hacer clic fuera *@
+@if (openDropdown != null)
+{
+    <div class="dropdown-dismiss-overlay" @onclick="CloseDropdown"></div>
 }
 
 <div class="page-header">
@@ -68,6 +75,7 @@ else if (!items.Any())
 }
 else if (!ShowAllItems && !HasSelectedPlatform)
 {
+    <!-- Plataform grid: no filters here -->
     <div class="wishlist-platform-grid">
         @foreach (var platform in PlatformCards)
         {
@@ -81,62 +89,219 @@ else if (!ShowAllItems && !HasSelectedPlatform)
         }
     </div>
 }
-else if (!ShowAllItems && !VisibleItems.Any())
+else
 {
-    <div class="card">
-        <div class="empty-state">
-            <div class="empty-icon">@AppStrings.Common.Dash</div>
-            <div class="empty-title">No hay art&iacute;culos en esta plataforma</div>
-            <div class="empty-desc">Vuelve atr&aacute;s o a&ntilde;ade un nuevo deseado para @SelectedPlatform.</div>
-            <button class="btn btn-secondary" @onclick="BackToPlatforms">
-                @AppStrings.Common.Back
+    <!-- ── Filters (shown in platform view and "all" view) ──────────────── -->
+
+    <!-- Fila 1: buscador + sort -->
+    <div class="filters-row-1">
+        <div class="search-wrapper">
+            <span class="search-icon">⌕</span>
+            <input class="search-input-d"
+                   placeholder="@AppStrings.Wishlist.SearchPlaceholder"
+                   @bind="searchTerm" @bind:event="oninput" @bind:after="ApplyFilters" />
+            @if (!string.IsNullOrEmpty(searchTerm))
+            {
+                <button class="search-clear" @onclick="ClearSearch">✕</button>
+            }
+        </div>
+
+        <div class="sort-group">
+            <select class="sort-select" @bind="sortBy" @bind:after="ApplyFilters">
+                <option value="name">Ordenar: Nombre</option>
+                <option value="value">Ordenar: Valor</option>
+            </select>
+            <button class="btn btn-secondary btn-sm sort-dir-btn" @onclick="ToggleSort"
+                    title="@(descending ? "Descendente" : "Ascendente")">
+                @(descending ? "↓" : "↑")
             </button>
         </div>
     </div>
-}
-else
-{
-    <div class="wishlist-grid">
-        @foreach (var item in DisplayItems)
-        {
-            <div class="wish-card" @onclick='() => Nav.NavigateTo($"/items/{item.Id}?returnPlatform={Uri.EscapeDataString(SelectedPlatform ?? "")}")'>
-                <div class="wish-card-top">
-                    <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">
-                        @(item.Type == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole)
-                    </span>
-                    <div class="wish-card-icon-actions">
-                        <button class="btn btn-secondary btn-sm wish-card-icon-button"
-                                title="Marcar como adquirido"
-                                aria-label="Marcar como adquirido"
-                                disabled="@markingOwnedIds.Contains(item.Id)"
-                                @onclick:stopPropagation @onclick="() => MarkOwned(item)">
-                            ✓
-                        </button>
-                        <button class="btn btn-danger btn-sm wish-card-icon-button"
-                                title="Eliminar de deseados"
-                                aria-label="Eliminar de deseados"
-                                @onclick:stopPropagation @onclick="() => AskDelete(item)">
-                            ✕
-                        </button>
+
+    <!-- Fila 2: botones de categoría -->
+    <div class="filters-row-2">
+
+        <!-- Tipo (selección única) -->
+        <div class="filter-dropdown-wrap">
+            <button class="filter-cat-btn @(filterType != "" ? "active" : "")"
+                    @onclick='() => ToggleDropdown("type")'>
+                @TypeLabel
+                <span class="cat-arrow">▾</span>
+            </button>
+            @if (openDropdown == "type")
+            {
+                <div class="filter-dropdown">
+                    <div class="filter-dropdown-item @(filterType == "" ? "selected" : "")"
+                         @onclick='() => SetSingleFilter("type", "")'>
+                        <span class="fdi-dot"></span>@AppStrings.Wishlist.FilterAllTypes
+                    </div>
+                    <div class="filter-dropdown-item @(filterType == "Game" ? "selected" : "")"
+                         @onclick='() => SetSingleFilter("type", "Game")'>
+                        <span class="fdi-dot"></span>@AppStrings.Common.TypeGame
+                    </div>
+                    <div class="filter-dropdown-item @(filterType == "Console" ? "selected" : "")"
+                         @onclick='() => SetSingleFilter("type", "Console")'>
+                        <span class="fdi-dot"></span>@AppStrings.Common.TypeConsole
                     </div>
                 </div>
-                <div class="wish-card-title">@item.Name</div>
-                <div class="wish-card-meta">
-                    @if (ShowAllItems)
+            }
+        </div>
+
+        <!-- Plataforma (multi-select, solo en vista "Todos") -->
+        @if (ShowAllItems)
+        {
+            <div class="filter-dropdown-wrap">
+                <button class="filter-cat-btn @(filterPlatforms.Count > 0 ? "active" : "")"
+                        @onclick='() => ToggleDropdown("platform")'>
+                    @PlatformLabel
+                    @if (filterPlatforms.Count > 1)
                     {
-                        <span>@item.Platform</span>
-                        <span class="wish-card-meta-separator">·</span>
+                        <span class="filter-count-badge">@filterPlatforms.Count</span>
                     }
-                    <span>@item.Region</span>
-                    @if (item.EstimatedValue.HasValue)
-                    {
-                        <span class="wish-card-meta-separator">·</span>
-                        <span class="wish-card-value">€@item.EstimatedValue.Value.ToString("F2")</span>
-                    }
-                </div>
+                    <span class="cat-arrow">▾</span>
+                </button>
+                @if (openDropdown == "platform")
+                {
+                    <div class="filter-dropdown filter-dropdown-multi">
+                        @foreach (var p in availablePlatforms)
+                        {
+                            var pCopy = p;
+                            var isChecked = filterPlatforms.Contains(pCopy);
+                            <div class="filter-dropdown-item filter-check-item @(isChecked ? "selected" : "")"
+                                 @onclick='() => ToggleMultiFilter(filterPlatforms, pCopy)'>
+                                <span class="fdi-checkbox @(isChecked ? "checked" : "")">@(isChecked ? "✓" : "")</span>
+                                @pCopy
+                            </div>
+                        }
+                        @if (filterPlatforms.Count > 0)
+                        {
+                            <div class="dropdown-footer">
+                                <button class="btn-clear-dropdown"
+                                        @onclick='() => ClearMultiFilter(filterPlatforms)'>
+                                    Limpiar selección
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         }
+
+        <!-- Región (multi-select) -->
+        <div class="filter-dropdown-wrap">
+            <button class="filter-cat-btn @(filterRegions.Count > 0 ? "active" : "")"
+                    @onclick='() => ToggleDropdown("region")'>
+                @RegionLabel
+                @if (filterRegions.Count > 1)
+                {
+                    <span class="filter-count-badge">@filterRegions.Count</span>
+                }
+                <span class="cat-arrow">▾</span>
+            </button>
+            @if (openDropdown == "region")
+            {
+                <div class="filter-dropdown filter-dropdown-multi">
+                    @foreach (var r in availableRegions)
+                    {
+                        var rCopy = r;
+                        var isChecked = filterRegions.Contains(rCopy);
+                        <div class="filter-dropdown-item filter-check-item @(isChecked ? "selected" : "")"
+                             @onclick='() => ToggleMultiFilter(filterRegions, rCopy)'>
+                            <span class="fdi-checkbox @(isChecked ? "checked" : "")">@(isChecked ? "✓" : "")</span>
+                            @rCopy
+                        </div>
+                    }
+                    @if (filterRegions.Count > 0)
+                    {
+                        <div class="dropdown-footer">
+                            <button class="btn-clear-dropdown"
+                                    @onclick='() => ClearMultiFilter(filterRegions)'>
+                                Limpiar selección
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
     </div>
+
+    <!-- Fila 3: chips de filtros activos -->
+    @if (ActiveChips.Any())
+    {
+        <div class="active-chips-row">
+            @foreach (var (key, value, label) in ActiveChips)
+            {
+                var keyCopy   = key;
+                var valueCopy = value;
+                <span class="filter-chip">
+                    @label
+                    <button class="chip-remove"
+                            @onclick='() => RemoveChip(keyCopy, valueCopy)'>✕</button>
+                </span>
+            }
+            <button class="btn-clear-all" @onclick="ClearAllFilters">Limpiar todo</button>
+        </div>
+    }
+
+    <!-- Cards -->
+    @if (!FilteredItems.Any())
+    {
+        <div class="card">
+            <div class="empty-state">
+                <div class="empty-icon">@AppStrings.Common.Dash</div>
+                <div class="empty-title">No se encontraron artículos</div>
+                <div class="empty-desc">Prueba a ajustar los filtros o el término de búsqueda.</div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="wishlist-grid">
+            @foreach (var item in FilteredItems)
+            {
+                var returnParam = HasSelectedPlatform
+                    ? $"?returnPlatform={Uri.EscapeDataString(SelectedPlatform!)}"
+                    : "?returnPlatform=";
+                <div class="wish-card" @onclick='() => Nav.NavigateTo($"/items/{item.Id}{returnParam}")'>
+                    <div class="wish-card-top">
+                        <span class="badge @(item.Type == "Game" ? "badge-game" : "badge-console")">
+                            @(item.Type == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole)
+                        </span>
+                        <div class="wish-card-icon-actions">
+                            <button class="btn btn-secondary btn-sm wish-card-icon-button"
+                                    title="Marcar como adquirido"
+                                    aria-label="Marcar como adquirido"
+                                    disabled="@markingOwnedIds.Contains(item.Id)"
+                                    @onclick:stopPropagation @onclick="() => MarkOwned(item)">
+                                ✓
+                            </button>
+                            <button class="btn btn-danger btn-sm wish-card-icon-button"
+                                    title="Eliminar de deseados"
+                                    aria-label="Eliminar de deseados"
+                                    @onclick:stopPropagation @onclick="() => AskDelete(item)">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                    <div class="wish-card-title">@item.Name</div>
+                    <div class="wish-card-meta">
+                        @if (ShowAllItems)
+                        {
+                            <span>@item.Platform</span>
+                            <span class="wish-card-meta-separator">·</span>
+                        }
+                        <span>@item.Region</span>
+                        @if (item.EstimatedValue.HasValue)
+                        {
+                            <span class="wish-card-meta-separator">·</span>
+                            <span class="wish-card-value">€@item.EstimatedValue.Value.ToString("F2")</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
 }
 
 @code {
@@ -148,48 +313,139 @@ else
     HashSet<Guid> markingOwnedIds = [];
     bool hasLoadedSavedViewMode;
 
+    // Filter state
+    string          searchTerm      = "";
+    string          filterType      = "";
+    HashSet<string> filterPlatforms = [];
+    HashSet<string> filterRegions   = [];
+    string          sortBy          = "name";
+    bool            descending      = false;
+    string?         openDropdown    = null;
+
+    // Available options
+    List<string> availablePlatforms = [];
+    List<string> availableRegions   = [];
+
     const string WishlistViewModeStorageKey = "wishlist.viewMode";
 
-    bool ShowAllItems => string.Equals(ViewMode, "all", StringComparison.OrdinalIgnoreCase);
+    bool ShowAllItems    => string.Equals(ViewMode, "all", StringComparison.OrdinalIgnoreCase);
     bool HasSelectedPlatform => !string.IsNullOrWhiteSpace(SelectedPlatform);
+
+    // ── Computed ──────────────────────────────────────────────────────────────
+
+    IEnumerable<CollectionItemDto> BaseItems
+    {
+        get
+        {
+            if (items is null) return [];
+            if (HasSelectedPlatform)
+                return items.Where(i => string.Equals(i.Platform, SelectedPlatform, StringComparison.OrdinalIgnoreCase));
+            return items; // ShowAllItems
+        }
+    }
+
+    IEnumerable<CollectionItemDto> FilteredItems
+    {
+        get
+        {
+            var q = BaseItems;
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+                q = q.Where(i => i.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrEmpty(filterType))
+                q = q.Where(i => i.Type == filterType);
+
+            if (filterPlatforms.Count > 0)
+                q = q.Where(i => filterPlatforms.Contains(i.Platform));
+
+            if (filterRegions.Count > 0)
+                q = q.Where(i => filterRegions.Contains(i.Region));
+
+            q = (sortBy, descending) switch
+            {
+                ("value", false) => q.OrderBy(i => i.EstimatedValue ?? decimal.MaxValue).ThenBy(i => i.Name),
+                ("value", true)  => q.OrderByDescending(i => i.EstimatedValue ?? decimal.MinValue).ThenBy(i => i.Name),
+                (_,       false) => q.OrderBy(i => ShowAllItems ? i.Platform + i.Name : i.Name),
+                (_,       true)  => q.OrderByDescending(i => ShowAllItems ? i.Platform + i.Name : i.Name),
+            };
+
+            return q;
+        }
+    }
 
     List<PlatformWishlistGroup> PlatformCards => items?
         .Where(i => !string.IsNullOrWhiteSpace(i.Platform))
         .GroupBy(i => i.Platform)
         .Select(g => new PlatformWishlistGroup(
-            g.Key,
-            g.Count(),
+            g.Key, g.Count(),
             g.Count(i => i.Type == "Game"),
             g.Count(i => i.Type == "Console")))
         .OrderBy(g => g.Name)
         .ToList()
         ?? [];
 
-    List<CollectionItemDto> VisibleItems => items?
-        .Where(i => string.Equals(i.Platform, SelectedPlatform, StringComparison.OrdinalIgnoreCase))
-        .OrderBy(i => i.Name)
-        .ToList()
-        ?? [];
+    string WishlistSubtitle
+    {
+        get
+        {
+            if (items is null) return string.Empty;
+            if (!ShowAllItems && !HasSelectedPlatform)
+                return $"{AppStrings.Common.ItemCountFmt(items.Count)} en total";
 
-    List<CollectionItemDto> DisplayItems => ShowAllItems
-        ? items?.OrderBy(i => i.Platform).ThenBy(i => i.Name).ToList() ?? []
-        : VisibleItems;
+            var filteredCount = FilteredItems.Count();
+            var baseCount = BaseItems.Count();
 
-    string WishlistSubtitle => items is null
-        ? string.Empty
-        : ShowAllItems
-            ? $"{AppStrings.Common.ItemCountFmt(items.Count)} en total"
-        : HasSelectedPlatform
-            ? $"{AppStrings.Common.ItemCountFmt(VisibleItems.Count)} en {SelectedPlatform}"
-            : $"{AppStrings.Common.ItemCountFmt(items.Count)} en total";
+            if (HasSelectedPlatform)
+                return filteredCount == baseCount
+                    ? $"{AppStrings.Common.ItemCountFmt(baseCount)} en {SelectedPlatform}"
+                    : $"{filteredCount} de {AppStrings.Common.ItemCountFmt(baseCount)} en {SelectedPlatform}";
+
+            return filteredCount == items.Count
+                ? $"{AppStrings.Common.ItemCountFmt(items.Count)} en total"
+                : $"{filteredCount} de {AppStrings.Common.ItemCountFmt(items.Count)} en total";
+        }
+    }
+
+    // ── Filter labels ─────────────────────────────────────────────────────────
+
+    string TypeLabel => filterType == ""
+        ? AppStrings.Wishlist.FilterAllTypes
+        : filterType == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole;
+
+    string PlatformLabel => filterPlatforms.Count == 0
+        ? AppStrings.Collection.FilterAllPlatforms
+        : filterPlatforms.First();
+
+    string RegionLabel => filterRegions.Count == 0
+        ? AppStrings.Collection.FilterAllRegions
+        : filterRegions.First();
+
+    // ── Chips ─────────────────────────────────────────────────────────────────
+
+    IEnumerable<(string key, string value, string label)> ActiveChips
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(filterType))
+                yield return ("type", filterType, TypeLabel);
+
+            if (ShowAllItems)
+                foreach (var p in filterPlatforms.OrderBy(x => x))
+                    yield return ("platform", p, p);
+
+            foreach (var r in filterRegions.OrderBy(x => x))
+                yield return ("region", r, r);
+        }
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override async Task OnInitializedAsync() => await LoadItems();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || hasLoadedSavedViewMode)
-            return;
-
+        if (!firstRender || hasLoadedSavedViewMode) return;
         hasLoadedSavedViewMode = true;
 
         if (ShowAllItems)
@@ -197,9 +453,7 @@ else
             await SaveViewModePreference("all");
             return;
         }
-
-        if (HasSelectedPlatform)
-            return;
+        if (HasSelectedPlatform) return;
 
         var savedMode = await LoadSavedViewModePreference();
         if (string.Equals(savedMode, "all", StringComparison.OrdinalIgnoreCase))
@@ -210,6 +464,21 @@ else
     {
         items = await Http.GetFromJsonAsync<List<CollectionItemDto>>("api/items?status=Wishlist") ?? [];
 
+        // Rebuild available filter options from data
+        availablePlatforms = items
+            .Select(i => i.Platform)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Distinct()
+            .OrderBy(p => p)
+            .ToList();
+
+        availableRegions = items
+            .Select(i => i.Region)
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Distinct()
+            .OrderBy(r => r)
+            .ToList();
+
         if (!ShowAllItems && HasSelectedPlatform &&
             !PlatformCards.Any(p => string.Equals(p.Name, SelectedPlatform, StringComparison.OrdinalIgnoreCase)))
         {
@@ -217,6 +486,8 @@ else
             Nav.NavigateTo("/wishlist", false);
         }
     }
+
+    // ── Navigation ────────────────────────────────────────────────────────────
 
     void NavigateToAddItem()
     {
@@ -230,74 +501,122 @@ else
         => Nav.NavigateTo($"/wishlist?platform={Uri.EscapeDataString(platform)}");
 
     void BackToPlatforms()
-        => Nav.NavigateTo("/wishlist");
+    {
+        ResetFilters();
+        Nav.NavigateTo("/wishlist");
+    }
 
     async Task SetViewMode(bool showAll)
     {
+        ResetFilters();
         await SaveViewModePreference(showAll ? "all" : "platforms");
-
-        if (showAll)
-        {
-            Nav.NavigateTo("/wishlist?view=all");
-            return;
-        }
-
-        Nav.NavigateTo(HasSelectedPlatform
-            ? $"/wishlist?platform={Uri.EscapeDataString(SelectedPlatform!)}"
-            : "/wishlist");
+        Nav.NavigateTo(showAll
+            ? "/wishlist?view=all"
+            : HasSelectedPlatform ? $"/wishlist?platform={Uri.EscapeDataString(SelectedPlatform!)}" : "/wishlist");
     }
+
+    // ── Filters ───────────────────────────────────────────────────────────────
+
+    void ApplyFilters() => StateHasChanged();
+
+    void ToggleSort()
+    {
+        descending = !descending;
+        StateHasChanged();
+    }
+
+    void ToggleDropdown(string name)
+        => openDropdown = openDropdown == name ? null : name;
+
+    void CloseDropdown() => openDropdown = null;
+
+    void SetSingleFilter(string key, string value)
+    {
+        if (key == "type") filterType = value;
+        openDropdown = null;
+        StateHasChanged();
+    }
+
+    void ToggleMultiFilter(HashSet<string> set, string value)
+    {
+        if (!set.Remove(value)) set.Add(value);
+        StateHasChanged();
+    }
+
+    void ClearMultiFilter(HashSet<string> set)
+    {
+        set.Clear();
+        StateHasChanged();
+    }
+
+    void RemoveChip(string key, string value)
+    {
+        switch (key)
+        {
+            case "type":     filterType = "";               break;
+            case "platform": filterPlatforms.Remove(value); break;
+            case "region":   filterRegions.Remove(value);   break;
+        }
+        StateHasChanged();
+    }
+
+    void ClearAllFilters()
+    {
+        filterType = "";
+        filterPlatforms.Clear();
+        filterRegions.Clear();
+        searchTerm = "";
+        StateHasChanged();
+    }
+
+    void ClearSearch()
+    {
+        searchTerm = "";
+        StateHasChanged();
+    }
+
+    void ResetFilters()
+    {
+        searchTerm = "";
+        filterType = "";
+        filterPlatforms.Clear();
+        filterRegions.Clear();
+        openDropdown = null;
+    }
+
+    // ── Actions ───────────────────────────────────────────────────────────────
 
     async Task<string?> LoadSavedViewModePreference()
     {
-        try
-        {
-            return await JS.InvokeAsync<string?>("localStorage.getItem", WishlistViewModeStorageKey);
-        }
-        catch
-        {
-            return null;
-        }
+        try { return await JS.InvokeAsync<string?>("localStorage.getItem", WishlistViewModeStorageKey); }
+        catch { return null; }
     }
 
     async Task SaveViewModePreference(string mode)
     {
-        try
-        {
-            await JS.InvokeVoidAsync("localStorage.setItem", WishlistViewModeStorageKey, mode);
-        }
-        catch
-        {
-            // Ignore storage failures (private mode, unavailable storage, etc.)
-        }
+        try { await JS.InvokeVoidAsync("localStorage.setItem", WishlistViewModeStorageKey, mode); }
+        catch { }
     }
 
     async Task MarkOwned(CollectionItemDto item)
     {
-        if (!markingOwnedIds.Add(item.Id))
-            return;
-
+        if (!markingOwnedIds.Add(item.Id)) return;
         try
         {
             var response = await Http.PostAsync($"api/items/{item.Id}/mark-owned", null);
-            var markOwnedResult = response.IsSuccessStatusCode
+            var result = response.IsSuccessStatusCode
                 ? await response.Content.ReadFromJsonAsync<StatusResponse>()
                 : null;
 
-            if (!response.IsSuccessStatusCode || !string.Equals(markOwnedResult?.Status, "Owned", StringComparison.OrdinalIgnoreCase))
+            if (!response.IsSuccessStatusCode ||
+                !string.Equals(result?.Status, "Owned", StringComparison.OrdinalIgnoreCase))
                 return;
 
-            if (response.IsSuccessStatusCode)
-            {
-                // Optimistic UI update so the card disappears immediately.
-                items?.RemoveAll(i => i.Id == item.Id);
-                StateHasChanged();
-                await LoadItems();
-            }
+            items?.RemoveAll(i => i.Id == item.Id);
+            StateHasChanged();
+            await LoadItems();
         }
-        finally
-        {
-            markingOwnedIds.Remove(item.Id);
-        }
+        finally { markingOwnedIds.Remove(item.Id); }
     }
 
     void AskDelete(CollectionItemDto item) => itemToDelete = item;
