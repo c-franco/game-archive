@@ -192,7 +192,98 @@ public class ToggleStatusHandler(IAppDbContext db) : IRequestHandler<ToggleStatu
         }
 
         item.UpdatedAt = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync(ct);
-        return item.Status.ToString();
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            return item.Status.ToString();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // If another request changed/deleted the row first, return the current persisted status.
+            var current = await db.Items
+                .AsNoTracking()
+                .Where(i => i.Id == cmd.Id)
+                .Select(i => (ItemStatus?)i.Status)
+                .FirstOrDefaultAsync(ct);
+
+            if (current is null)
+                throw new KeyNotFoundException(ServerStrings.Items.NotFoundFmt(cmd.Id));
+
+            return current.Value.ToString();
+        }
+    }
+}
+
+// ── MARK AS OWNED (IDEMPOTENT) ───────────────────────────────────────────────
+
+public record MarkAsOwnedCommand(Guid Id) : IRequest<string>;
+
+public class MarkAsOwnedHandler(IAppDbContext db) : IRequestHandler<MarkAsOwnedCommand, string>
+{
+    public async Task<string> Handle(MarkAsOwnedCommand cmd, CancellationToken ct)
+    {
+        var itemInfo = await db.Items
+            .AsNoTracking()
+            .Where(i => i.Id == cmd.Id)
+            .Select(i => new { i.Status, i.Type })
+            .FirstOrDefaultAsync(ct);
+
+        if (itemInfo is null)
+            throw new KeyNotFoundException(ServerStrings.Items.NotFoundFmt(cmd.Id));
+
+        if (itemInfo.Status != ItemStatus.Owned)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var affected = await db.Items
+                .Where(i => i.Id == cmd.Id && i.Status != ItemStatus.Owned)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(i => i.Status, i => ItemStatus.Owned)
+                    .SetProperty(i => i.UpdatedAt, i => now), ct);
+
+            if (affected == 0)
+            {
+                // If no row was affected, return the final persisted state (or 404 if deleted).
+                var current = await db.Items
+                    .AsNoTracking()
+                    .Where(i => i.Id == cmd.Id)
+                    .Select(i => (ItemStatus?)i.Status)
+                    .FirstOrDefaultAsync(ct);
+
+                if (current is null)
+                    throw new KeyNotFoundException(ServerStrings.Items.NotFoundFmt(cmd.Id));
+
+                if (current != ItemStatus.Owned)
+                    return current.Value.ToString();
+            }
+        }
+
+        // Ensure an owned item always has its checklist entries.
+        var hasChecklist = await db.ChecklistEntries
+            .AsNoTracking()
+            .AnyAsync(e => e.CollectionItemId == cmd.Id, ct);
+
+        if (!hasChecklist)
+        {
+            var templates = await db.ChecklistTemplates
+                .AsNoTracking()
+                .Where(t => t.ItemType == itemInfo.Type)
+                .OrderBy(t => t.SortOrder)
+                .ToListAsync(ct);
+
+            if (templates.Count > 0)
+            {
+                db.ChecklistEntries.AddRange(templates.Select(t => new ChecklistEntry
+                {
+                    CollectionItemId = cmd.Id,
+                    Label = t.Label,
+                    IsChecked = false,
+                    SortOrder = t.SortOrder
+                }));
+
+                await db.SaveChangesAsync(ct);
+            }
+        }
+
+        return ItemStatus.Owned.ToString();
     }
 }

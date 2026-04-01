@@ -107,6 +107,7 @@ else
                         <button class="btn btn-secondary btn-sm wish-card-icon-button"
                                 title="Marcar como adquirido"
                                 aria-label="Marcar como adquirido"
+                                disabled="@markingOwnedIds.Contains(item.Id)"
                                 @onclick:stopPropagation @onclick="() => MarkOwned(item)">
                             ✓
                         </button>
@@ -143,6 +144,7 @@ else
 
     List<CollectionItemDto>? items;
     CollectionItemDto? itemToDelete;
+    HashSet<Guid> markingOwnedIds = [];
 
     bool ShowAllItems => string.Equals(ViewMode, "all", StringComparison.OrdinalIgnoreCase);
     bool HasSelectedPlatform => !string.IsNullOrWhiteSpace(SelectedPlatform);
@@ -220,8 +222,31 @@ else
 
     async Task MarkOwned(CollectionItemDto item)
     {
-        await Http.PostAsync($"api/items/{item.Id}/toggle-status", null);
-        await LoadItems();
+        if (!markingOwnedIds.Add(item.Id))
+            return;
+
+        try
+        {
+            var response = await Http.PostAsync($"api/items/{item.Id}/mark-owned", null);
+            var markOwnedResult = response.IsSuccessStatusCode
+                ? await response.Content.ReadFromJsonAsync<StatusResponse>()
+                : null;
+
+            if (!response.IsSuccessStatusCode || !string.Equals(markOwnedResult?.Status, "Owned", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Optimistic UI update so the card disappears immediately.
+                items?.RemoveAll(i => i.Id == item.Id);
+                StateHasChanged();
+                await LoadItems();
+            }
+        }
+        finally
+        {
+            markingOwnedIds.Remove(item.Id);
+        }
     }
 
     void AskDelete(CollectionItemDto item) => itemToDelete = item;
@@ -246,4 +271,5 @@ else
     }
 
     record PlatformWishlistGroup(string Name, int Count, int GameCount, int ConsoleCount);
+    record StatusResponse(string Status);
 }

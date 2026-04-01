@@ -79,6 +79,20 @@ public class ItemsController(IMediator mediator) : ControllerBase
         }
     }
 
+    [HttpPost("{id:guid}/mark-owned")]
+    public async Task<IActionResult> MarkOwned(Guid id)
+    {
+        try
+        {
+            var newStatus = await mediator.Send(new MarkAsOwnedCommand(id));
+            return Ok(new { status = newStatus });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpGet("platforms")]
     public async Task<IActionResult> GetPlatforms()
     {
