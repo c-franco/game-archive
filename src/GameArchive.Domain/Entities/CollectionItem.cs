@@ -16,4 +16,8 @@ public class CollectionItem
     public List<ChecklistEntry> ChecklistEntries { get; set; } = [];
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    // ── Price tracking ────────────────────────────────────────────────────────
+    public DateTimeOffset? PriceLastFetchedAt { get; set; }
+    public string PriceSource { get; set; } = string.Empty; // "PriceCharting" | "Manual" | ""
 }

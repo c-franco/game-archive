@@ -21,6 +21,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(x => x.Name).IsRequired().HasMaxLength(200);
             e.Property(x => x.PurchasePrice).HasPrecision(10, 2);
             e.Property(x => x.EstimatedValue).HasPrecision(10, 2);
+            e.Property(x => x.PriceLastFetchedAt);
+            e.Property(x => x.PriceSource).HasDefaultValue("");
             e.HasMany(x => x.ChecklistEntries)
              .WithOne(c => c.CollectionItem)
              .HasForeignKey(c => c.CollectionItemId)

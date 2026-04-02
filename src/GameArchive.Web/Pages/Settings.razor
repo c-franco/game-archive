@@ -1,5 +1,6 @@
 @page "/settings"
 @inject HttpClient Http
+@inject IJSRuntime JS
 @using GameArchive.Web.Resources
 
 <div class="page-header">
@@ -19,17 +20,10 @@ else
         <div style="font-weight:600;font-size:0.95rem;margin-bottom:14px">
             @AppStrings.Settings.DataSectionTitle
         </div>
-
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <a href="api/export/csv"  class="btn btn-secondary" target="_blank">
-                @AppStrings.Settings.ExportCsv
-            </a>
-            <a href="api/export/json" class="btn btn-secondary" target="_blank">
-                @AppStrings.Settings.ExportJson
-            </a>
-
+            <a href="api/export/csv"  class="btn btn-secondary" target="_blank">@AppStrings.Settings.ExportCsv</a>
+            <a href="api/export/json" class="btn btn-secondary" target="_blank">@AppStrings.Settings.ExportJson</a>
             <div style="width:2px;height:34px;background:var(--border);flex-shrink:0;margin:0 10px"></div>
-
             <label class="btn btn-secondary" style="cursor:pointer;text-transform:none;letter-spacing:normal">
                 @AppStrings.Settings.ImportCsv
                 <InputFile OnChange='e => OnFileSelected(e, "csv")' accept=".csv" style="display:none" />
@@ -39,7 +33,6 @@ else
                 <InputFile OnChange='e => OnFileSelected(e, "json")' accept=".json" style="display:none" />
             </label>
         </div>
-
         @if (importing)
         {
             <div style="margin-top:14px;display:flex;align-items:center;gap:10px;color:var(--text-2);font-size:0.875rem">
@@ -47,15 +40,12 @@ else
                 @AppStrings.Settings.Importing
             </div>
         }
-
         @if (importResult != null)
         {
             <div style="margin-top:14px">
                 @if (importResult.Errors.Count == 0)
                 {
-                    <div class="alert alert-success">
-                        @AppStrings.Settings.ImportSuccessFmt(importResult.Created, importResult.Updated)
-                    </div>
+                    <div class="alert alert-success">@AppStrings.Settings.ImportSuccessFmt(importResult.Created, importResult.Updated)</div>
                 }
                 else
                 {
@@ -63,23 +53,96 @@ else
                         @AppStrings.Settings.ImportErrorFmt(importResult.Created, importResult.Updated)
                     </div>
                     <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:0.8rem;color:var(--red);display:flex;flex-direction:column;gap:4px">
-                        @foreach (var err in importResult.Errors)
-                        {
-                            <div>• @err</div>
-                        }
+                        @foreach (var err in importResult.Errors) { <div>• @err</div> }
                     </div>
                 }
             </div>
         }
     </div>
 
-    <!-- ── Checklist templates: Console left · Game right ────────────────── -->
+    <!-- ── Valores estimados ──────────────────────────────────────────────── -->
+    <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:4px">
+            <div>
+                <div style="font-weight:600;font-size:0.95rem">Valores estimados</div>
+                <div style="font-size:0.82rem;color:var(--text-2);margin-top:3px">
+                    Obtiene el precio de mercado actual de PriceCharting para cada artículo adquirido.
+                    Usa la condición del checklist para elegir precio Loose o CIB. Precios en EUR.
+                </div>
+            </div>
+            <button class="btn btn-secondary"
+                    @onclick="StartPriceFetch"
+                    disabled="@(fetchState == FetchState.Running)">
+                @if (fetchState == FetchState.Running)
+                {
+                    <span class="spinner" style="width:14px;height:14px;border-width:2px;flex-shrink:0"></span>
+                    <span>Actualizando…</span>
+                }
+                else
+                {
+                    <span>🔍 Actualizar todos los precios</span>
+                }
+            </button>
+        </div>
+
+        @if (fetchState != FetchState.Idle)
+        {
+            <div style="margin-top:16px">
+
+                @if (fetchState == FetchState.Running)
+                {
+                    <div style="display:flex;justify-content:space-between;font-size:0.82rem;color:var(--text-2);margin-bottom:6px">
+                        <span>Consultando PriceCharting…</span>
+                        <span style="font-family:'Space Mono',monospace;color:var(--accent)">
+                            @fetchDone de @fetchTotal artículos actualizados
+                        </span>
+                    </div>
+                    <div class="progress-bar-track" style="height:8px;margin-bottom:8px">
+                        <div class="progress-bar-fill"
+                             style="width:@(ProgressPct.ToString("F0"))%;transition:width 0.4s ease">
+                        </div>
+                    </div>
+                    <div style="font-size:0.78rem;color:var(--text-3)">
+                        No cierres esta página mientras se actualiza.
+                    </div>
+                }
+
+                @if (fetchState == FetchState.Done)
+                {
+                    <div class="alert alert-success"
+                         style="margin-bottom:@(fetchErrors.Count > 0 ? "10px" : "0")">
+                        ✓ Completado — @fetchUpdated actualizados, @fetchFailed sin precio encontrado.
+                    </div>
+                    @if (fetchErrors.Count > 0)
+                    {
+                        <details>
+                            <summary style="font-size:0.82rem;color:var(--text-3);cursor:pointer;user-select:none">
+                                Ver artículos sin precio (@fetchErrors.Count)
+                            </summary>
+                            <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-top:8px;font-size:0.78rem;color:var(--text-2);display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto">
+                                @foreach (var err in fetchErrors) { <div>• @err</div> }
+                            </div>
+                        </details>
+                    }
+                }
+
+                @if (fetchState == FetchState.Error)
+                {
+                    <div class="alert alert-error">
+                        Error al conectar con el servidor. Revisa los logs del servidor (.NET).
+                    </div>
+                }
+
+            </div>
+        }
+    </div>
+
+    <!-- ── Checklist templates ────────────────────────────────────────────── -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
         @foreach (var itemType in new[] { "Console", "Game" })
         {
             var label = itemType == "Game" ? AppStrings.Common.TypeGame : AppStrings.Common.TypeConsole;
             var group = GetTemplateGroup(itemType);
-
             <div class="card">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
                     <div style="font-weight:600;font-size:0.95rem">
@@ -87,12 +150,10 @@ else
                               style="margin-right:8px">@label</span>
                         @AppStrings.Settings.ChecklistSuffix
                     </div>
-                    <button class="btn btn-secondary btn-sm"
-                            @onclick="() => AddTemplateRow(itemType)">
+                    <button class="btn btn-secondary btn-sm" @onclick="() => AddTemplateRow(itemType)">
                         @AppStrings.Settings.AddTemplateRow
                     </button>
                 </div>
-
                 @if (!group.Any())
                 {
                     <div style="color:var(--text-3);font-size:0.875rem;padding:12px 0">
@@ -124,40 +185,28 @@ else
 
     <!-- ── Platforms ─────────────────────────────────────────────────────── -->
     <div class="card" style="margin-bottom:20px">
-        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">
-            @AppStrings.Settings.PlatformsSectionTitle
-        </div>
-        <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">
-            @AppStrings.Settings.PlatformsHint
-        </div>
+        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">@AppStrings.Settings.PlatformsSectionTitle</div>
+        <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">@AppStrings.Settings.PlatformsHint</div>
         <textarea style="min-height:220px;font-family:'Space Mono',monospace;font-size:0.85rem;resize:vertical"
-                  @bind="platformsText"
-                  placeholder="@AppStrings.Settings.PlatformsPlaceholder"></textarea>
+                  @bind="platformsText" placeholder="@AppStrings.Settings.PlatformsPlaceholder"></textarea>
     </div>
 
     <!-- ── Regions ───────────────────────────────────────────────────────── -->
     <div class="card" style="margin-bottom:20px">
-        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">
-            @AppStrings.Settings.RegionsSectionTitle
-        </div>
-        <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">
-            @AppStrings.Settings.RegionsHint
-        </div>
+        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">@AppStrings.Settings.RegionsSectionTitle</div>
+        <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">@AppStrings.Settings.RegionsHint</div>
         <textarea style="min-height:180px;font-family:'Space Mono',monospace;font-size:0.85rem;resize:vertical"
-                  @bind="regionsText"
-                  placeholder="@AppStrings.Settings.RegionsPlaceholder"></textarea>
+                  @bind="regionsText" placeholder="@AppStrings.Settings.RegionsPlaceholder"></textarea>
     </div>
 
     <!-- ── Save ──────────────────────────────────────────────────────────── -->
     <hr class="divider" />
-
     @if (!string.IsNullOrEmpty(saveMsg))
     {
         <div class="alert @(saveError ? "alert-error" : "alert-success")" style="margin-bottom:16px">
             @saveMsg
         </div>
     }
-
     <div style="padding-bottom:32px">
         <button class="btn btn-save" @onclick="SaveAll" disabled="@saving">
             @(saving ? AppStrings.Common.Saving : AppStrings.Settings.SaveButton)
@@ -166,41 +215,41 @@ else
 }
 
 @code {
-    List<TemplateRow>? localTemplates = null;
-    string?            platformsText  = null;
-    string?            regionsText    = null;
+    List<TemplateRow>? localTemplates;
+    string?            platformsText;
+    string?            regionsText;
+    bool               saving;
+    string             saveMsg   = "";
+    bool               saveError;
+    bool               importing;
+    ImportResultDto?   importResult;
 
-    bool   saving    = false;
-    string saveMsg   = "";
-    bool   saveError = false;
+    // ── Price fetch state ─────────────────────────────────────────────────────
+    enum FetchState { Idle, Running, Done, Error }
 
-    bool             importing    = false;
-    ImportResultDto? importResult = null;
+    FetchState   fetchState   = FetchState.Idle;
+    int          fetchDone    = 0;
+    int          fetchTotal   = 0;
+    int          fetchUpdated = 0;
+    int          fetchFailed  = 0;
+    List<string> fetchErrors  = [];
+
+    double ProgressPct => fetchTotal > 0 ? fetchDone * 100.0 / fetchTotal : 0;
 
     // ── Load ──────────────────────────────────────────────────────────────────
-
     protected override async Task OnInitializedAsync()
     {
-        var settings = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
-        if (settings is null) return;
-        BuildLocalState(settings);
+        var s = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
+        if (s is not null) BuildLocalState(s);
     }
 
     void BuildLocalState(SettingsDto s)
     {
         localTemplates = s.Templates
-            .Select(t => new TemplateRow
-            {
-                Id        = t.Id,
-                ItemType  = t.ItemType,
-                Label     = t.Label,
-                SortOrder = t.SortOrder,
-                IsNew     = false
-            })
+            .Select(t => new TemplateRow { Id = t.Id, ItemType = t.ItemType, Label = t.Label, SortOrder = t.SortOrder })
             .ToList();
-
         platformsText = string.Join("\n", s.Platforms.OrderBy(p => p.SortOrder).Select(p => p.Name));
-        regionsText = string.Join("\n", s.Regions.OrderBy(r => r.SortOrder).Select(r => r.Name));
+        regionsText   = string.Join("\n", s.Regions.OrderBy(r => r.SortOrder).Select(r => r.Name));
     }
 
     List<TemplateRow> GetTemplateGroup(string itemType)
@@ -208,99 +257,122 @@ else
 
     void AddTemplateRow(string itemType)
     {
-        var nextOrder = localTemplates!
-            .Where(t => t.ItemType == itemType)
-            .Select(t => t.SortOrder)
-            .DefaultIfEmpty(0).Max() + 1;
-
+        var next = localTemplates!.Where(t => t.ItemType == itemType)
+                                  .Select(t => t.SortOrder).DefaultIfEmpty(0).Max() + 1;
         localTemplates!.Add(new TemplateRow
-        {
-            Id        = Guid.NewGuid(),
-            ItemType  = itemType,
-            Label     = "",
-            SortOrder = nextOrder,
-            IsNew     = true
-        });
+            { Id = Guid.NewGuid(), ItemType = itemType, Label = "", SortOrder = next, IsNew = true });
     }
 
     void RemoveTemplateRow(TemplateRow t) => localTemplates!.Remove(t);
 
-    // ── Save ──────────────────────────────────────────────────────────────────
+    // ── Price fetch ───────────────────────────────────────────────────────────
+    async Task StartPriceFetch()
+    {
+        fetchState   = FetchState.Running;
+        fetchDone    = 0;
+        fetchTotal   = 0;
+        fetchUpdated = 0;
+        fetchFailed  = 0;
+        fetchErrors  = [];
+        StateHasChanged();
 
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "priceProgress.start",
+                DotNetObjectReference.Create(this),
+                "/api/price/fetch-all");
+        }
+        catch
+        {
+            fetchState = FetchState.Error;
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public void OnPriceProgress(int done, int total)
+    {
+        fetchDone  = done;
+        fetchTotal = total;
+        InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void OnPriceDone(int updated, int failed, string[] errors)
+    {
+        fetchUpdated = updated;
+        fetchFailed  = failed;
+        fetchErrors  = errors.ToList();
+        fetchState   = FetchState.Done;
+        // Set done = total so progress bar reaches 100 %
+        if (fetchTotal > 0) fetchDone = fetchTotal;
+        InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void OnPriceError()
+    {
+        fetchState = FetchState.Error;
+        InvokeAsync(StateHasChanged);
+    }
+
+    // ── Save settings ─────────────────────────────────────────────────────────
     async Task SaveAll()
     {
         saving = true; saveMsg = ""; saveError = false;
-
-        var platforms = platformsText!
-            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Trim())
-            .Where(s => s.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select((name, i) => new { Name = name, SortOrder = i + 1 })
-            .ToList();
 
         var payload = new
         {
             Templates = localTemplates!
                 .Where(t => !string.IsNullOrWhiteSpace(t.Label))
-                .Select(t => new
-                {
-                    Id       = t.IsNew ? (Guid?)null : t.Id,
-                    t.ItemType,
-                    t.Label,
-                    t.SortOrder
-                })
+                .Select(t => new { Id = t.IsNew ? (Guid?)null : t.Id, t.ItemType, t.Label, t.SortOrder })
                 .ToList(),
-            Platforms = platforms,
+            Platforms = platformsText!
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim()).Where(s => s.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select((n, i) => new { Name = n, SortOrder = i + 1 }).ToList(),
             Regions = regionsText!
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => s.Trim())
-                .Where(s => s.Length > 0)
+                .Select(s => s.Trim()).Where(s => s.Length > 0)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Select((name, i) => new { Name = name, SortOrder = i + 1 })
-                .ToList()
+                .Select((n, i) => new { Name = n, SortOrder = i + 1 }).ToList()
         };
 
         var resp = await Http.PutAsJsonAsync("api/settings", payload);
-
         if (resp.IsSuccessStatusCode)
         {
-            var settings = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
-            if (settings is not null) BuildLocalState(settings);
-
-            saveMsg   = AppStrings.Settings.SaveSuccess;
-            saveError = false;
+            var s = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
+            if (s is not null) BuildLocalState(s);
+            saveMsg = AppStrings.Settings.SaveSuccess;
         }
         else
         {
             saveMsg   = AppStrings.Settings.SaveErrorFmt((int)resp.StatusCode);
             saveError = true;
         }
-
         saving = false;
         _ = Task.Delay(3000).ContinueWith(_ => { saveMsg = ""; InvokeAsync(StateHasChanged); });
     }
 
     // ── Import ────────────────────────────────────────────────────────────────
-
     async Task OnFileSelected(InputFileChangeEventArgs e, string format)
     {
         importResult = null; importing = true; StateHasChanged();
         try
         {
-            var content = new MultipartFormDataContent();
-            content.Add(new StreamContent(e.File.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)),
-                        "file", e.File.Name);
-            var resp = await Http.PostAsync($"api/import/{format}", content);
+            var body = new MultipartFormDataContent();
+            body.Add(new StreamContent(e.File.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)),
+                     "file", e.File.Name);
+            var resp = await Http.PostAsync($"api/import/{format}", body);
             importResult = resp.IsSuccessStatusCode
                 ? await resp.Content.ReadFromJsonAsync<ImportResultDto>()
-                : new ImportResultDto(0, 0,
-                    [AppStrings.Settings.ImportServerErrorFmt((int)resp.StatusCode)]);
-
+                : new ImportResultDto(0, 0, [AppStrings.Settings.ImportServerErrorFmt((int)resp.StatusCode)]);
             if (resp.IsSuccessStatusCode)
             {
-                var settings = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
-                if (settings is not null) BuildLocalState(settings);
+                var s = await Http.GetFromJsonAsync<SettingsDto>("api/settings");
+                if (s is not null) BuildLocalState(s);
             }
         }
         catch (Exception ex)
@@ -311,8 +383,7 @@ else
         finally { importing = false; }
     }
 
-    // ── Types ─────────────────────────────────────────────────────────────────
-
+    // ── Local types ───────────────────────────────────────────────────────────
     class TemplateRow
     {
         public Guid   Id        { get; set; }

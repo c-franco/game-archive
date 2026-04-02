@@ -12,57 +12,130 @@ public static class SeedData
 
         if (await db.Items.AnyAsync()) return;
 
+        var now = DateTimeOffset.UtcNow;
+
         var items = new List<CollectionItem>
         {
-            new() {
+            new()
+            {
                 Name = "The Legend of Zelda: Ocarina of Time",
-                Type = ItemType.Game, Platform = "Nintendo 64",
-                Region = "NTSC-U", Condition = "Good",
-                PurchasePrice = 45m, EstimatedValue = 80m,
+                Type = ItemType.Game,
+                Platform = "Nintendo 64",
+                Region = "NTSC-U",
+                Condition = "Good",
+                PurchasePrice = 45m,
+                EstimatedValue = 80m,
                 PurchaseDate = new DateOnly(2022, 3, 12),
                 Status = ItemStatus.Owned,
-                Notes = "CIB, slight wear on box corners"
+                Notes = "CIB, slight wear on box corners",
+                CreatedAt = now,
+                UpdatedAt = now,
+                PriceSource = "Manual",
+                PriceLastFetchedAt = now,
+                ChecklistEntries = new List<ChecklistEntry>
+                {
+                    new() { Label = "Box", IsChecked = true, SortOrder = 1 },
+                    new() { Label = "Manual", IsChecked = true, SortOrder = 2 },
+                    new() { Label = "Cartridge", IsChecked = true, SortOrder = 3 }
+                }
             },
-            new() {
+            new()
+            {
                 Name = "Super Mario World",
-                Type = ItemType.Game, Platform = "SNES",
-                Region = "PAL", Condition = "Good",
-                PurchasePrice = 30m, EstimatedValue = 55m,
+                Type = ItemType.Game,
+                Platform = "SNES",
+                Region = "PAL",
+                Condition = "Good",
+                PurchasePrice = 30m,
+                EstimatedValue = 55m,
                 PurchaseDate = new DateOnly(2021, 9, 20),
-                Status = ItemStatus.Owned
+                Status = ItemStatus.Owned,
+                CreatedAt = now,
+                UpdatedAt = now,
+                PriceSource = "Manual",
+                PriceLastFetchedAt = now,
+                ChecklistEntries = new List<ChecklistEntry>
+                {
+                    new() { Label = "Cartridge", IsChecked = true, SortOrder = 1 }
+                }
             },
-            new() {
+            new()
+            {
                 Name = "Super Nintendo Entertainment System",
-                Type = ItemType.Console, Platform = "SNES",
-                Region = "PAL", Condition = "Good",
-                PurchasePrice = 120m, EstimatedValue = 180m,
+                Type = ItemType.Console,
+                Platform = "SNES",
+                Region = "PAL",
+                Condition = "Good",
+                PurchasePrice = 120m,
+                EstimatedValue = 180m,
                 PurchaseDate = new DateOnly(2021, 7, 5),
                 Status = ItemStatus.Owned,
-                Notes = "Includes 2 controllers and power cable"
+                Notes = "Includes 2 controllers and power cable",
+                CreatedAt = now,
+                UpdatedAt = now,
+                PriceSource = "Manual",
+                PriceLastFetchedAt = now,
+                ChecklistEntries = new List<ChecklistEntry>
+                {
+                    new() { Label = "Console", IsChecked = true, SortOrder = 1 },
+                    new() { Label = "Controller 1", IsChecked = true, SortOrder = 2 },
+                    new() { Label = "Controller 2", IsChecked = true, SortOrder = 3 },
+                    new() { Label = "Power Cable", IsChecked = true, SortOrder = 4 }
+                }
             },
-            new() {
+            new()
+            {
                 Name = "Nintendo 64",
-                Type = ItemType.Console, Platform = "Nintendo 64",
-                Region = "NTSC-U", Condition = "Fair",
-                PurchasePrice = 85m, EstimatedValue = 110m,
+                Type = ItemType.Console,
+                Platform = "Nintendo 64",
+                Region = "NTSC-U",
+                Condition = "Fair",
+                PurchasePrice = 85m,
+                EstimatedValue = 110m,
                 PurchaseDate = new DateOnly(2020, 4, 15),
-                Status = ItemStatus.Owned
+                Status = ItemStatus.Owned,
+                CreatedAt = now,
+                UpdatedAt = now,
+                PriceSource = "Manual",
+                PriceLastFetchedAt = now,
+                ChecklistEntries = new List<ChecklistEntry>
+                {
+                    new() { Label = "Console", IsChecked = true, SortOrder = 1 },
+                    new() { Label = "Controller", IsChecked = true, SortOrder = 2 },
+                    new() { Label = "AV Cable", IsChecked = false, SortOrder = 3 }
+                }
             },
-            new() {
+            new()
+            {
                 Name = "Chrono Trigger",
-                Type = ItemType.Game, Platform = "SNES",
-                Region = "NTSC-J", Condition = "Fair",
-                PurchasePrice = null, EstimatedValue = 300m,
+                Type = ItemType.Game,
+                Platform = "SNES",
+                Region = "NTSC-J",
+                Condition = "Fair",
+                PurchasePrice = null,
+                EstimatedValue = 300m,
                 Status = ItemStatus.Wishlist,
-                Notes = "Dream item — Japanese cart version preferred"
+                Notes = "Dream item — Japanese cart version preferred",
+                CreatedAt = now,
+                UpdatedAt = now,
+                PriceSource = "PriceCharting",
+                PriceLastFetchedAt = now
             },
-            new() {
+            new()
+            {
                 Name = "EarthBound",
-                Type = ItemType.Game, Platform = "SNES",
-                Region = "NTSC-U", Condition = "Good",
-                PurchasePrice = null, EstimatedValue = 200m,
+                Type = ItemType.Game,
+                Platform = "SNES",
+                Region = "NTSC-U",
+                Condition = "Good",
+                PurchasePrice = null,
+                EstimatedValue = 200m,
                 Status = ItemStatus.Wishlist,
-                Notes = "Complete in box would be ideal"
+                Notes = "Complete in box would be ideal",
+                CreatedAt = now,
+                UpdatedAt = now,
+                PriceSource = "PriceCharting",
+                PriceLastFetchedAt = now
             }
         };
 
