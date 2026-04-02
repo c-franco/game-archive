@@ -80,12 +80,22 @@ window.priceScraper = {
         const checked = (item.checklistEntries || [])
             .filter(e => e.isChecked)
             .map(e => e.label.trim().toLowerCase());
-        const hasBox    = checked.some(l => l.includes("box"));
+        const hasBox = checked.some(l => l.includes("box") || l.includes("caja"));
         const hasManual = checked.some(l => l.includes("manual"));
-        const hasMedia  = item.type === "Console" || checked.some(l =>
-            l.includes("cartridge") || l.includes("disc") ||
-            l.includes("disk")      || l.includes("game"));
-        return (hasBox && hasManual && hasMedia) ? "CIB" : "Loose";
+
+        if (item.type === "Console") {
+            // For consoles: CIB = Box/Caja + Controller/Mando + Cables
+            const hasController = checked.some(l => l.includes("controller") || l.includes("mando"));
+            const hasCables = checked.some(l => l.includes("cable"));
+            return (hasBox && hasController && hasCables) ? "CIB" : "Loose";
+        } else {
+            // For games: CIB = Box/Caja + Manual + Cartridge/Disc/Cartucho/Disco
+            const hasMedia = checked.some(l =>
+                l.includes("cartridge") || l.includes("disc") ||
+                l.includes("disk")      || l.includes("game") ||
+                l.includes("cartucho")  || l.includes("disco"));
+            return (hasBox && hasManual && hasMedia) ? "CIB" : "Loose";
+        }
     },
 
     // Build name slug: lowercase, hyphens, strip special chars

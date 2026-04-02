@@ -34,9 +34,9 @@ public static class SeedData
                 PriceLastFetchedAt = now,
                 ChecklistEntries = new List<ChecklistEntry>
                 {
-                    new() { Label = "Box", IsChecked = true, SortOrder = 1 },
+                    new() { Label = "Caja", IsChecked = true, SortOrder = 1 },
                     new() { Label = "Manual", IsChecked = true, SortOrder = 2 },
-                    new() { Label = "Cartridge", IsChecked = true, SortOrder = 3 }
+                    new() { Label = "Cartucho/Disco", IsChecked = true, SortOrder = 3 }
                 }
             },
             new()
@@ -56,7 +56,9 @@ public static class SeedData
                 PriceLastFetchedAt = now,
                 ChecklistEntries = new List<ChecklistEntry>
                 {
-                    new() { Label = "Cartridge", IsChecked = true, SortOrder = 1 }
+                    new() { Label = "Caja", IsChecked = false, SortOrder = 1 },
+                    new() { Label = "Manual", IsChecked = false, SortOrder = 2 },
+                    new() { Label = "Cartucho/Disco", IsChecked = true, SortOrder = 3 }
                 }
             },
             new()
@@ -77,10 +79,10 @@ public static class SeedData
                 PriceLastFetchedAt = now,
                 ChecklistEntries = new List<ChecklistEntry>
                 {
-                    new() { Label = "Console", IsChecked = true, SortOrder = 1 },
-                    new() { Label = "Controller 1", IsChecked = true, SortOrder = 2 },
-                    new() { Label = "Controller 2", IsChecked = true, SortOrder = 3 },
-                    new() { Label = "Power Cable", IsChecked = true, SortOrder = 4 }
+                    new() { Label = "Caja", IsChecked = true, SortOrder = 1 },
+                    new() { Label = "Mando", IsChecked = true, SortOrder = 2 },
+                    new() { Label = "Cables", IsChecked = true, SortOrder = 3 },
+                    new() { Label = "Manual", IsChecked = true, SortOrder = 4 }
                 }
             },
             new()
@@ -100,9 +102,10 @@ public static class SeedData
                 PriceLastFetchedAt = now,
                 ChecklistEntries = new List<ChecklistEntry>
                 {
-                    new() { Label = "Console", IsChecked = true, SortOrder = 1 },
-                    new() { Label = "Controller", IsChecked = true, SortOrder = 2 },
-                    new() { Label = "AV Cable", IsChecked = false, SortOrder = 3 }
+                    new() { Label = "Caja", IsChecked = true, SortOrder = 1 },
+                    new() { Label = "Mando", IsChecked = true, SortOrder = 2 },
+                    new() { Label = "Cables", IsChecked = false, SortOrder = 3 },
+                    new() { Label = "Manual", IsChecked = false, SortOrder = 4 }
                 }
             },
             new()
@@ -119,7 +122,13 @@ public static class SeedData
                 CreatedAt = now,
                 UpdatedAt = now,
                 PriceSource = "PriceCharting",
-                PriceLastFetchedAt = now
+                PriceLastFetchedAt = now,
+                ChecklistEntries = new List<ChecklistEntry>
+                {
+                    new() { Label = "Caja", IsChecked = false, SortOrder = 1 },
+                    new() { Label = "Manual", IsChecked = false, SortOrder = 2 },
+                    new() { Label = "Cartucho/Disco", IsChecked = false, SortOrder = 3 }
+                }
             },
             new()
             {
@@ -135,7 +144,13 @@ public static class SeedData
                 CreatedAt = now,
                 UpdatedAt = now,
                 PriceSource = "PriceCharting",
-                PriceLastFetchedAt = now
+                PriceLastFetchedAt = now,
+                ChecklistEntries = new List<ChecklistEntry>
+                {
+                    new() { Label = "Caja", IsChecked = false, SortOrder = 1 },
+                    new() { Label = "Manual", IsChecked = false, SortOrder = 2 },
+                    new() { Label = "Cartucho/Disco", IsChecked = false, SortOrder = 3 }
+                }
             }
         };
 

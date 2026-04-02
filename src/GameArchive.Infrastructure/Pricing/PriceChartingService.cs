@@ -147,16 +147,38 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
         return SlugMap.TryGetValue($"{platform.Trim()}|{r}", out var s) ? s : null;
     }
 
-    public static string ResolveCondition(CollectionItem item)
+    public static string ResolveCondition(CollectionItem item, ILogger? logger = null)
     {
         if (item.Condition.Equals("New", StringComparison.OrdinalIgnoreCase)) return "New";
         var ticked = item.ChecklistEntries
             .Where(e => e.IsChecked).Select(e => e.Label.ToLowerInvariant()).ToHashSet();
-        bool box    = ticked.Any(l => l.Contains("box"));
+        
+        logger?.LogInformation("[ResolveCondition] Item='{Name}' Type={Type} Ticked=[{Ticked}]", 
+            item.Name, item.Type, string.Join(", ", ticked));
+        
+        bool box = ticked.Any(l => l.Contains("box") || l.Contains("caja"));
         bool manual = ticked.Any(l => l.Contains("manual"));
-        bool media  = item.Type == ItemType.Console
-            || ticked.Any(l => l.Contains("cartridge") || l.Contains("disc") || l.Contains("game"));
-        return box && manual && media ? "CIB" : "Loose";
+        
+        logger?.LogInformation("[ResolveCondition] HasBox={Box} HasManual={Manual}", box, manual);
+
+        if (item.Type == ItemType.Console)
+        {
+            bool controller = ticked.Any(l => l.Contains("controller") || l.Contains("mando"));
+            bool cables = ticked.Any(l => l.Contains("cable"));
+            bool isCib = box && controller && cables;
+            logger?.LogInformation("[ResolveCondition] Console: HasController={Ctrl} HasCables={Cables} Result={Result}", 
+                controller, cables, isCib ? "CIB" : "Loose");
+            return isCib ? "CIB" : "Loose";
+        }
+        else
+        {
+            bool media = ticked.Any(l => l.Contains("cartridge") || l.Contains("disc") || l.Contains("game")
+                || l.Contains("cartucho") || l.Contains("disco"));
+            bool isCib = box && manual && media;
+            logger?.LogInformation("[ResolveCondition] Game: HasMedia={Media} Result={Result}", 
+                media, isCib ? "CIB" : "Loose");
+            return isCib ? "CIB" : "Loose";
+        }
     }
 
     // ── EUR conversion ────────────────────────────────────────────────────────
@@ -273,37 +295,65 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
         var html = await GetAsync(url, ct);
         logger.LogInformation("[Scrape] Page {L} chars", html.Length);
 
-        decimal? Parse(string id)
+        // Try multiple patterns for each price type
+        decimal? TryExtract(string[] patterns)
         {
-            // id uses underscores: "used_price", "complete_price", "new_price"
-            var idx = html.IndexOf(id, StringComparison.OrdinalIgnoreCase);
-            if (idx < 0) { logger.LogWarning("[Scrape] id='{I}' not found", id); return null; }
-
-            // Within the next 400 chars after the id, find:
-            // <span class="price js-price">$14.78</span>
-            // or <span class="js-price">$14.78</span>
-            var window = html[idx..Math.Min(html.Length, idx + 400)];
-            logger.LogDebug("[Scrape] Window for '{I}':\n{W}", id, window);
-
-            var m = Regex.Match(window,
-                @"class=""[^""]*js-price[^""]*""[^>]*>\s*\$\s*([\d,]+\.?\d{0,2})\s*<",
-                RegexOptions.IgnoreCase);
-
-            if (m.Success)
+            foreach (var pattern in patterns)
             {
-                var raw = m.Groups[1].Value.Replace(",", "");
-                if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var v))
+                var idx = html.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+                if (idx >= 0)
                 {
-                    logger.LogInformation("[Scrape] '{I}' = ${V}", id, v);
-                    return v;
+                    var window = html[idx..Math.Min(html.Length, idx + 400)];
+                    logger.LogDebug("[Scrape] Found pattern '{P}', window: {W}", pattern, window[..Math.Min(100, window.Length)]);
+
+                    var m = Regex.Match(window,
+                        @"class=""[^""]*js-price[^""]*""[^>]*>\s*\$\s*([\d,]+\.?\d{0,2})\s*<",
+                        RegexOptions.IgnoreCase);
+
+                    if (m.Success)
+                    {
+                        var raw = m.Groups[1].Value.Replace(",", "");
+                        if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var v))
+                        {
+                            logger.LogInformation("[Scrape] Pattern '{P}' → ${V}", pattern, v);
+                            return v;
+                        }
+                    }
                 }
             }
-
-            logger.LogWarning("[Scrape] No js-price found after '{I}'", id);
             return null;
         }
 
-        return (Parse("used_price"), Parse("complete_price"), Parse("new_price"));
+        // Try multiple patterns for each price
+        var loosePatterns = new[] { "used_price", "class=\"price numeric used_price\"", "used-price" };
+        var cibPatterns = new[] { "cib_price", "class=\"price numeric cib_price\"", "complete_price", "complete-price", "cib-price" };
+        var newPatterns = new[] { "new_price", "class=\"price numeric new_price\"", "new-price" };
+
+        var loose = TryExtract(loosePatterns);
+        var cib = TryExtract(cibPatterns);
+        var newP = TryExtract(newPatterns);
+
+        if (cib == null)
+        {
+            // Fallback: try to find CIB price by looking for the span with js-price after cib_price class
+            var cibIdx = html.IndexOf("cib_price", StringComparison.OrdinalIgnoreCase);
+            if (cibIdx >= 0)
+            {
+                var window = html[cibIdx..Math.Min(html.Length, cibIdx + 500)];
+                var m = Regex.Match(window, @"<span[^>]*js-price[^>]*>\s*\$\s*([\d,]+\.?\d{0,2})", RegexOptions.IgnoreCase);
+                if (m.Success)
+                {
+                    var raw = m.Groups[1].Value.Replace(",", "");
+                    if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var v))
+                    {
+                        logger.LogInformation("[Scrape] CIB fallback → ${V}", v);
+                        cib = v;
+                    }
+                }
+            }
+        }
+
+        return (loose, cib, newP);
     }
 
     // ── Public: single item ───────────────────────────────────────────────────
@@ -317,7 +367,7 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
             return new(false, null, "", null,
                 $"Plataforma/región no soportada: '{item.Platform}' / '{item.Region}'");
 
-        var condition = ResolveCondition(item);
+        var condition = ResolveCondition(item, logger);
         logger.LogInformation("=== '{N}' | {S} | {C} ===", item.Name, slug, condition);
 
         string? productUrl;
