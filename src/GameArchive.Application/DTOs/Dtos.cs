@@ -13,7 +13,8 @@ public record CollectionItemDto(
     string Notes,
     string Status,
     List<ChecklistEntryDto> ChecklistEntries,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    string ProductUrl
 );
 
 public record ChecklistEntryDto(Guid Id, string Label, bool IsChecked, int SortOrder);

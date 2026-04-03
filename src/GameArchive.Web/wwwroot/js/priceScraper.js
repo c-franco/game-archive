@@ -200,14 +200,21 @@ window.priceScraper = {
         const condition = this.resolveCondition(item);
 
         let productUrl;
-        try {
-            productUrl = await this._findProductUrl(item.name, slug);
-        } catch (e) {
-            return { success: false, error: `Error en búsqueda: ${e.message}` };
-        }
+        
+        // Use manual URL if provided, otherwise search
+        if (item.productUrl && item.productUrl.trim()) {
+            productUrl = item.productUrl.trim();
+            console.log(`[PriceScraper] Using manual URL: ${productUrl}`);
+        } else {
+            try {
+                productUrl = await this._findProductUrl(item.name, slug);
+            } catch (e) {
+                return { success: false, error: `Error en búsqueda: ${e.message}` };
+            }
 
-        if (!productUrl) {
-            return { success: false, error: "Producto no encontrado en PriceCharting" };
+            if (!productUrl) {
+                return { success: false, error: "Producto no encontrado en PriceCharting" };
+            }
         }
 
         let prices;

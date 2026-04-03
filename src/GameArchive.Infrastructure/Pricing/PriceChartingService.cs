@@ -373,12 +373,22 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
         logger.LogInformation("=== '{N}' | {S} | {C} ===", item.Name, slug, condition);
 
         string? productUrl;
-        try   { productUrl = await FindProductUrlAsync(item.Name, slug, ct); }
-        catch (Exception ex)
-            { return new(false, null, condition, null, $"Error en búsqueda: {ex.Message}"); }
+        
+        // Use manual URL if provided, otherwise search
+        if (!string.IsNullOrWhiteSpace(item.ProductUrl))
+        {
+            productUrl = item.ProductUrl;
+            logger.LogInformation("[FetchPrice] Using manual URL: {Url}", productUrl);
+        }
+        else
+        {
+            try   { productUrl = await FindProductUrlAsync(item.Name, slug, ct); }
+            catch (Exception ex)
+                { return new(false, null, condition, null, $"Error en búsqueda: {ex.Message}"); }
 
-        if (productUrl is null)
-            return new(false, null, condition, null, "Producto no encontrado en PriceCharting");
+            if (productUrl is null)
+                return new(false, null, condition, null, "Producto no encontrado en PriceCharting");
+        }
 
         decimal? usd;
         try

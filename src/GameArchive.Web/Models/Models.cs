@@ -13,7 +13,8 @@ public record CollectionItemDto(
     string Notes,
     string Status,
     List<ChecklistEntryDto> ChecklistEntries,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    string ProductUrl
 );
 
 public record ChecklistEntryDto(Guid Id, string Label, bool IsChecked, int SortOrder);
@@ -56,6 +57,7 @@ public class ItemFormModel
     public string Notes { get; set; } = "";
     public string Status { get; set; } = "Owned";
     public List<ChecklistEntryForm> ChecklistEntries { get; set; } = [];
+    public string ProductUrl { get; set; } = "";
 }
 
 public class ChecklistEntryForm

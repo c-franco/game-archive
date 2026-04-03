@@ -37,7 +37,8 @@ public class GetItemByIdHandler(IAppDbContext db) : IRequestHandler<GetItemByIdQ
                     .OrderBy(e => e.SortOrder)
                     .Select(e => new ChecklistEntryDto(e.Id, e.Label, e.IsChecked, e.SortOrder))
                     .ToList(),
-                i.CreatedAt))
+                i.CreatedAt,
+                i.ProductUrl))
             .FirstOrDefaultAsync(ct);
     }
 }
@@ -65,7 +66,8 @@ public class GetItemEditContextHandler(IAppDbContext db) : IRequestHandler<GetIt
                     .OrderBy(e => e.SortOrder)
                     .Select(e => new ChecklistEntryDto(e.Id, e.Label, e.IsChecked, e.SortOrder))
                     .ToList(),
-                i.CreatedAt))
+                i.CreatedAt,
+                i.ProductUrl))
             .FirstOrDefaultAsync(ct);
 
         var platformsTask = db.Platforms

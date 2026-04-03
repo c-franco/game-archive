@@ -20,4 +20,5 @@ public class CollectionItem
     // ── Price tracking ────────────────────────────────────────────────────────
     public DateTimeOffset? PriceLastFetchedAt { get; set; }
     public string PriceSource { get; set; } = string.Empty; // "PriceCharting" | "Manual" | ""
+    public string ProductUrl { get; set; } = string.Empty;  // URL manual override para scraping
 }

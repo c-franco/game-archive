@@ -85,6 +85,7 @@ public class GetItemsHandler(IAppDbContext db) : IRequestHandler<GetItemsQuery, 
         i.PurchasePrice, i.EstimatedValue, i.PurchaseDate, i.Notes, i.Status.ToString(),
         i.ChecklistEntries.Select(e => new ChecklistEntryDto(e.Id, e.Label, e.IsChecked, e.SortOrder))
                           .OrderBy(e => e.SortOrder).ToList(),
-        i.CreatedAt
+        i.CreatedAt,
+        i.ProductUrl
     );
 }

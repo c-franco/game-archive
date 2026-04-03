@@ -20,7 +20,8 @@ public record CreateItemCommand(
     DateOnly? PurchaseDate,
     string Notes,
     ItemStatus Status,
-    List<ChecklistUpdate> ChecklistUpdates
+    List<ChecklistUpdate> ChecklistUpdates,
+    string ProductUrl
 ) : IRequest<Guid>;
 
 public class CreateItemHandler(IAppDbContext db) : IRequestHandler<CreateItemCommand, Guid>
@@ -41,7 +42,8 @@ public class CreateItemHandler(IAppDbContext db) : IRequestHandler<CreateItemCom
             EstimatedValue = cmd.EstimatedValue,
             PurchaseDate   = purchaseDate,
             Notes          = cmd.Notes,
-            Status         = cmd.Status
+            Status         = cmd.Status,
+            ProductUrl     = cmd.ProductUrl ?? string.Empty
         };
 
         if (cmd.Status == ItemStatus.Owned)
@@ -81,7 +83,8 @@ public record UpdateItemCommand(
     DateOnly? PurchaseDate,
     string Notes,
     ItemStatus Status,
-    List<ChecklistUpdate> ChecklistUpdates
+    List<ChecklistUpdate> ChecklistUpdates,
+    string ProductUrl
 ) : IRequest;
 
 public class UpdateItemHandler(IAppDbContext db) : IRequestHandler<UpdateItemCommand>
@@ -106,6 +109,7 @@ public class UpdateItemHandler(IAppDbContext db) : IRequestHandler<UpdateItemCom
         item.PurchaseDate   = purchaseDate;
         item.Notes          = cmd.Notes;
         item.Status         = cmd.Status;
+        item.ProductUrl     = cmd.ProductUrl ?? string.Empty;
         item.UpdatedAt      = DateTimeOffset.UtcNow;
 
         if (cmd.Status == ItemStatus.Wishlist)
