@@ -23,6 +23,13 @@ public record ChecklistTemplateDto(Guid Id, string ItemType, string Label, int S
 public record PlatformDto(Guid Id, string Name, int SortOrder);
 public record RegionDto(Guid Id, string Name, int SortOrder);
 
+public record PlatformValueDto(
+    string Platform,
+    int Count,
+    decimal Spent,
+    decimal EstimatedValue
+);
+
 public record StatsDto(
     int TotalItems,
     int TotalOwned,
@@ -31,7 +38,8 @@ public record StatsDto(
     decimal TotalSpent,
     decimal TotalWishlistValue,
     Dictionary<string, int> ByType,
-    Dictionary<string, int> ByPlatform
+    Dictionary<string, int> ByPlatform,
+    List<PlatformValueDto> PlatformValues
 );
 
 public class ItemFormModel

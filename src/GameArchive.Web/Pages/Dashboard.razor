@@ -81,6 +81,68 @@ else
             }
         </div>
     </div>
+
+    <!-- ── Inversión por plataforma ─────────────────────────────────────────── -->
+    <div class="card" style="margin-top:16px">
+        <div style="font-weight:600;margin-bottom:12px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">
+            Gastado vs Valor por plataforma
+        </div>
+        @if (stats.PlatformValues?.Any() != true)
+        {
+            <div style="color:var(--text-3);font-size:0.875rem">No hay datos de plataformas</div>
+        }
+        else
+        {
+            <div style="display:grid;gap:6px">
+                @foreach (var p in stats.PlatformValues)
+                {
+                    var diff = p.EstimatedValue - p.Spent;
+                    var maxVal = Math.Max(p.Spent, p.EstimatedValue);
+                    var spentWidth = maxVal > 0 ? (p.Spent / maxVal * 100) : 0;
+                    var valueWidth = maxVal > 0 ? (p.EstimatedValue / maxVal * 100) : 0;
+                    var diffColor = diff >= 0 ? "var(--green)" : "var(--red)";
+                    var diffSign = diff >= 0 ? "+" : "";
+                    
+                    <div style="display:grid;grid-template-columns:120px 1fr auto auto auto;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--border)">
+                        <!-- Plataforma -->
+                        <span style="font-weight:500;font-size:0.8125rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="@p.Platform">@p.Platform</span>
+                        
+                        <!-- Barras apiladas -->
+                        <div style="display:flex;flex-direction:column;gap:2px">
+                            <!-- Barra gastado -->
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <div class="progress-bar-track" style="flex:1;height:6px;min-width:60px">
+                                    <div class="progress-bar-fill" style="width:@spentWidth.ToString("F0")%;height:100%;opacity:0.6"></div>
+                                </div>
+                                <span style="font-size:0.6875rem;color:var(--text-2);width:50px;text-align:right">@FormatHelper.FormatPrice(p.Spent, false)</span>
+                            </div>
+                            <!-- Barra valor -->
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <div class="progress-bar-track" style="flex:1;height:6px;min-width:60px">
+                                    <div class="progress-bar-fill green" style="width:@valueWidth.ToString("F0")%;height:100%"></div>
+                                </div>
+                                <span style="font-size:0.6875rem;color:var(--text-2);width:50px;text-align:right">@FormatHelper.FormatPrice(p.EstimatedValue, false)</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Artículos -->
+                        <span style="font-size:0.6875rem;color:var(--text-3);text-align:center;width:24px">@p.Count</span>
+                        
+                        <!-- Diferencia -->
+                        <span style="font-size:0.75rem;font-weight:600;color:@diffColor;width:60px;text-align:right">@diffSign@FormatHelper.FormatPrice(diff, false)</span>
+                    </div>
+                }
+            </div>
+            
+            <!-- Leyenda -->
+            <div style="display:flex;gap:16px;margin-top:18px;font-size:0.6875rem;color:var(--text-2)">
+                <span><span style="color:var(--accent);opacity:0.6">■</span> Gastado</span>
+                <span><span style="color:var(--green)">■</span> Valor estimado</span>
+                <span><span style="color:var(--green)">+</span> Ganancia</span>
+                <span><span style="color:var(--red)">-</span> Pérdida</span>
+            </div>
+        }
+    </div>
 }
 
 @code {
