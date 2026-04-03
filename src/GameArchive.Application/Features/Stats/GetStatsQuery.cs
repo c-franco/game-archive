@@ -11,6 +11,7 @@ public record StatsDto(
     int TotalWishlist,
     decimal TotalEstimatedValue,
     decimal TotalSpent,
+    decimal TotalWishlistValue,
     Dictionary<string, int> ByType,
     Dictionary<string, int> ByPlatform
 );
@@ -36,6 +37,9 @@ public class GetStatsHandler(IAppDbContext db) : IRequestHandler<GetStatsQuery, 
             TotalSpent:          owned
                                      .Where(i => i.PurchasePrice.HasValue)
                                      .Sum(i => i.PurchasePrice!.Value),
+            TotalWishlistValue:  wishlist
+                                     .Where(i => i.EstimatedValue.HasValue)
+                                     .Sum(i => i.EstimatedValue!.Value),
             ByType:              owned
                                      .GroupBy(i => i.Type.ToString())
                                      .ToDictionary(g => g.Key, g => g.Count()),

@@ -59,11 +59,11 @@ public static class AppStrings
     public static class Dashboard
     {
         public const string Title               = "Dashboard";
-        public const string StatTotalItems      = "Total artículos";
         public const string StatOwned           = "Adquiridos";
         public const string StatWishlist        = "Lista de deseados";
         public const string StatEstimatedValue  = "Valor estimado";
         public const string StatTotalSpent      = "Total invertido";
+        public const string StatWishlistValue   = "Valor deseados";
         public const string ChartByType         = "Por tipo";
         public const string ChartByPlatformTop8 = "Por plataforma (Top 8)";
     }

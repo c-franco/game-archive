@@ -17,10 +17,6 @@ else
 {
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-value">@stats.TotalItems</div>
-            <div class="stat-label">@AppStrings.Dashboard.StatTotalItems</div>
-        </div>
-        <div class="stat-card">
             <div class="stat-value">@stats.TotalOwned</div>
             <div class="stat-label">@AppStrings.Dashboard.StatOwned</div>
         </div>
@@ -35,6 +31,10 @@ else
         <div class="stat-card">
             <div class="stat-value">€@stats.TotalSpent.ToString("F0")</div>
             <div class="stat-label">@AppStrings.Dashboard.StatTotalSpent</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">€@stats.TotalWishlistValue.ToString("F0")</div>
+            <div class="stat-label">@AppStrings.Dashboard.StatWishlistValue</div>
         </div>
     </div>
 

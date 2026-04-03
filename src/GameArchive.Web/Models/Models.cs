@@ -29,6 +29,7 @@ public record StatsDto(
     int TotalWishlist,
     decimal TotalEstimatedValue,
     decimal TotalSpent,
+    decimal TotalWishlistValue,
     Dictionary<string, int> ByType,
     Dictionary<string, int> ByPlatform
 );
