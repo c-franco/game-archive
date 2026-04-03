@@ -35,12 +35,11 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// ── Migrate & Seed ────────────────────────────────────────────────────────────
+// ── Migrate ───────────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
-    await SeedData.InitializeAsync(db);
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────
