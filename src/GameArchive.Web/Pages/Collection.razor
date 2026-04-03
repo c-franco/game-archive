@@ -3,6 +3,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @using GameArchive.Web.Resources
+@using GameArchive.Web.Shared
 
 @if (itemToDelete != null)
 {
@@ -29,7 +30,13 @@
 <div class="page-header">
     <div>
         <div class="page-title">@AppStrings.Collection.Title</div>
-        <div class="page-subtitle">@CollectionSubtitle</div>
+        <div class="page-subtitle">
+            @CollectionSubtitle
+            @if (TotalEstimatedValue > 0)
+            {
+                <span class="total-value-badge"> · Valor total estimado: @FormatHelper.FormatPrice(TotalEstimatedValue)</span>
+            }
+        </div>
     </div>
     <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/items/new")'>
         @AppStrings.Collection.AddItem
@@ -262,8 +269,8 @@ else
                         <td class="td-muted">@item.Platform</td>
                         <td class="td-muted">@item.Region</td>
                         <td class="td-muted">@TranslateCondition(item.Condition)</td>
-                        <td class="td-muted">@FormatPrice(item.PurchasePrice)</td>
-                        <td class="td-muted">@FormatPrice(item.EstimatedValue)</td>
+                        <td class="td-muted">@FormatHelper.FormatPrice(item.PurchasePrice)</td>
+                        <td class="td-muted">@FormatHelper.FormatPrice(item.EstimatedValue)</td>
                         <td>
                             @if (totalCount > 0)
                             {
@@ -378,6 +385,8 @@ else
     string CollectionSubtitle => items is null
         ? string.Empty
         : AppStrings.Collection.SubtitleFmt(items.Count);
+
+    decimal? TotalEstimatedValue => items?.Sum(i => i.EstimatedValue ?? 0);
 
     int TotalPages => items is null || items.Count == 0
         ? 1
@@ -660,9 +669,6 @@ else
         else if (currentPage > TotalPages)
             currentPage = TotalPages;
     }
-
-    static string FormatPrice(decimal? v)
-        => v.HasValue ? $"€{v:F2}" : AppStrings.Common.Dash;
 
     static string TranslateCondition(string c) => c switch
     {

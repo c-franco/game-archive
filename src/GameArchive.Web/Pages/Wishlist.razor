@@ -3,6 +3,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @using GameArchive.Web.Resources
+@using GameArchive.Web.Shared
 @using System.Linq
 
 @if (itemToDelete != null)
@@ -295,7 +296,7 @@ else
                         @if (item.EstimatedValue.HasValue)
                         {
                             <span class="wish-card-meta-separator">·</span>
-                            <span class="wish-card-value">€@item.EstimatedValue.Value.ToString("F2")</span>
+                            <span class="wish-card-value">@FormatHelper.FormatPrice(item.EstimatedValue)</span>
                         }
                     </div>
                 </div>

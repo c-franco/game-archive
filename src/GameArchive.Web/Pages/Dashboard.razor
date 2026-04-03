@@ -2,6 +2,7 @@
 @page "/dashboard"
 @inject HttpClient Http
 @using GameArchive.Web.Resources
+@using GameArchive.Web.Shared
 
 <div class="page-header">
     <div>
@@ -25,15 +26,15 @@ else
             <div class="stat-label">@AppStrings.Dashboard.StatWishlist</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">€@stats.TotalEstimatedValue.ToString("F0")</div>
+            <div class="stat-value">@FormatHelper.FormatPrice(stats.TotalEstimatedValue, false)</div>
             <div class="stat-label">@AppStrings.Dashboard.StatEstimatedValue</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">€@stats.TotalSpent.ToString("F0")</div>
+            <div class="stat-value">@FormatHelper.FormatPrice(stats.TotalSpent, false)</div>
             <div class="stat-label">@AppStrings.Dashboard.StatTotalSpent</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">€@stats.TotalWishlistValue.ToString("F0")</div>
+            <div class="stat-value">@FormatHelper.FormatPrice(stats.TotalWishlistValue, false)</div>
             <div class="stat-label">@AppStrings.Dashboard.StatWishlistValue</div>
         </div>
     </div>
