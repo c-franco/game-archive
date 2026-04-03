@@ -19,7 +19,8 @@ public record CreateItemCommand(
     decimal? EstimatedValue,
     DateOnly? PurchaseDate,
     string Notes,
-    ItemStatus Status
+    ItemStatus Status,
+    List<ChecklistUpdate> ChecklistUpdates
 ) : IRequest<Guid>;
 
 public class CreateItemHandler(IAppDbContext db) : IRequestHandler<CreateItemCommand, Guid>
@@ -53,7 +54,7 @@ public class CreateItemHandler(IAppDbContext db) : IRequestHandler<CreateItemCom
             item.ChecklistEntries = templates.Select(t => new ChecklistEntry
             {
                 Label     = t.Label,
-                IsChecked = false,
+                IsChecked = cmd.ChecklistUpdates?.FirstOrDefault(u => u.Label == t.Label)?.IsChecked ?? false,
                 SortOrder = t.SortOrder
             }).ToList();
         }
@@ -66,7 +67,7 @@ public class CreateItemHandler(IAppDbContext db) : IRequestHandler<CreateItemCom
 
 // ── UPDATE ──────────────────────────────────────────────────────────────────
 
-public record ChecklistUpdate(Guid EntryId, bool IsChecked);
+public record ChecklistUpdate(string Label, bool IsChecked);
 
 public record UpdateItemCommand(
     Guid Id,
@@ -130,7 +131,7 @@ public class UpdateItemHandler(IAppDbContext db) : IRequestHandler<UpdateItemCom
 
             foreach (var update in cmd.ChecklistUpdates)
             {
-                var entry = item.ChecklistEntries.FirstOrDefault(e => e.Id == update.EntryId);
+                var entry = item.ChecklistEntries.FirstOrDefault(e => e.Label == update.Label);
                 if (entry is not null) entry.IsChecked = update.IsChecked;
             }
         }

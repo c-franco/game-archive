@@ -473,7 +473,10 @@ else
                 model.EstimatedValue,
                 PurchaseDate   = purchaseDate,
                 model.Notes,
-                Status         = model.Status == "Owned" ? 0 : 1
+                Status         = model.Status == "Owned" ? 0 : 1,
+                ChecklistUpdates = model.ChecklistEntries
+                    .Select(e => new { Label = e.Label, IsChecked = e.IsChecked })
+                    .ToList()
             });
 
             saving = false;
@@ -501,7 +504,7 @@ else
                 model.Notes,
                 Status         = model.Status == "Owned" ? 0 : 1,
                 ChecklistUpdates = model.ChecklistEntries
-                    .Select(e => new { EntryId = e.Id, e.IsChecked })
+                    .Select(e => new { Label = e.Label, IsChecked = e.IsChecked })
                     .ToList()
             });
 
