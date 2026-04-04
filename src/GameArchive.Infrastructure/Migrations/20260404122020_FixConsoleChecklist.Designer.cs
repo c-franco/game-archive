@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GameArchive.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260404112555_RemoveConsoleManual")]
-    partial class RemoveConsoleManual
+    [Migration("20260404122020_FixConsoleChecklist")]
+    partial class FixConsoleChecklist
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -71,28 +71,28 @@ namespace GameArchive.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000001"),
+                            Id = new Guid("11111111-0000-0000-0000-000000000008"),
                             ItemType = 1,
                             Label = "Consola",
                             SortOrder = 0
                         },
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000002"),
+                            Id = new Guid("11111111-0000-0000-0000-000000000001"),
                             ItemType = 1,
                             Label = "Caja",
                             SortOrder = 1
                         },
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000003"),
+                            Id = new Guid("11111111-0000-0000-0000-000000000002"),
                             ItemType = 1,
                             Label = "Mando",
                             SortOrder = 2
                         },
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000004"),
+                            Id = new Guid("11111111-0000-0000-0000-000000000003"),
                             ItemType = 1,
                             Label = "Cables",
                             SortOrder = 3
