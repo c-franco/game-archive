@@ -10,8 +10,8 @@ public static class ServerStrings
     // ── Import service ────────────────────────────────────────────────────────
     public static class Import
     {
-        public const string ErrInvalidJson       = "El fichero JSON no es válido: ";
-        public const string ErrInvalidCsv        = "El fichero CSV no es válido: ";
+        public const string ErrInvalidJson = "El fichero JSON no es válido: ";
+        public const string ErrInvalidCsv = "El fichero CSV no es válido: ";
 
         public static string ErrRowNameMissing(int row)
             => $"Fila {row}: el campo 'Name' es obligatorio.";
@@ -30,5 +30,19 @@ public static class ServerStrings
     public static class Items
     {
         public static string NotFoundFmt(Guid id) => $"Item {id} not found";
+        public const string IdMismatch = "ID mismatch";
+    }
+
+    // ── PriceChartingService ─────────────────────────────────────────────────
+    public static class PriceCharting
+    {
+        public static string UnsupportedPlatformRegion(string platform, string region)
+            => $"Plataforma/región no soportada: '{platform}' / '{region}'";
+        public static string SearchError(string message)
+            => $"Error en búsqueda: {message}";
+        public const string ProductNotFound = "Producto no encontrado en PriceCharting";
+        public static string FetchPriceError(string message)
+            => $"Error al obtener precio: {message}";
+        public const string PriceNotAvailable = "Precio no disponible en la página";
     }
 }

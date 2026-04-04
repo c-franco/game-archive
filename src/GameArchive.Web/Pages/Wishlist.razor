@@ -113,7 +113,7 @@ else
                 <option value="value">Ordenar: Valor</option>
             </select>
             <button class="btn btn-secondary btn-sm sort-dir-btn" @onclick="ToggleSort"
-                    title="@(descending ? "Descendente" : "Ascendente")">
+                    title="@(descending ? AppStrings.Collection.SortDescendingTitle : AppStrings.Collection.SortAscendingTitle)">
                 @(descending ? "↓" : "↑")
             </button>
         </div>
@@ -271,15 +271,15 @@ else
                         </span>
                         <div class="wish-card-icon-actions">
                             <button class="btn btn-secondary btn-sm wish-card-icon-button"
-                                    title="Marcar como adquirido"
-                                    aria-label="Marcar como adquirido"
+                                    title="@AppStrings.Wishlist.MarkOwnedTitle"
+                                    aria-label="@AppStrings.Wishlist.MarkOwnedTitle"
                                     disabled="@markingOwnedIds.Contains(item.Id)"
                                     @onclick:stopPropagation @onclick="() => MarkOwned(item)">
                                 ✓
                             </button>
                             <button class="btn btn-danger btn-sm wish-card-icon-button"
-                                    title="Eliminar de deseados"
-                                    aria-label="Eliminar de deseados"
+                                    title="@AppStrings.Wishlist.DeleteFromWishlistTitle"
+                                    aria-label="@AppStrings.Wishlist.DeleteFromWishlistTitle"
                                     @onclick:stopPropagation @onclick="() => AskDelete(item)">
                                 ✕
                             </button>

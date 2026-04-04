@@ -86,8 +86,10 @@ public static class AppStrings
         public const string SortDate           = "Ordenar: Fecha";
         public const string SortPrice          = "Ordenar: Precio";
         public const string SortValue          = "Ordenar: Valor";
-        public const string SortDesc           = "↓ Desc";
-        public const string SortAsc            = "↑ Asc";
+        public const string SortDesc          = "↓ Desc";
+        public const string SortAsc             = "↑ Asc";
+        public const string SortDescendingTitle = "Descendente";
+        public const string SortAscendingTitle  = "Ascendente";
 
         public const string ColName            = "Nombre";
         public const string ColType            = "Tipo";
@@ -113,6 +115,8 @@ public static class AppStrings
         public const string SearchPlaceholder  = "Buscar en la lista…";
         public const string FilterAllTypes     = "Todos los tipos";
         public const string MarkOwned          = "✓ Marcar como adquirido";
+        public const string MarkOwnedTitle       = "Marcar como adquirido";
+        public const string DeleteFromWishlistTitle = "Eliminar de deseados";
 
         public const string EmptyIcon          = "♡";
         public const string EmptyTitle         = "La lista de deseos está vacía";
@@ -141,6 +145,9 @@ public static class AppStrings
         public const string FieldPurchasePrice = "Precio de compra (€) *";
         public const string FieldEstimatedValue = "Valor estimado actual (€)";
         public const string FieldNotes         = "Notas";
+        public const string FieldProductUrl      = "URL de PriceCharting";
+        public const string FieldProductUrlHelp  = "Si el scraping automático no encuentra el juego, puedes especificar la URL manualmente.";
+        public const string ProductUrlPlaceholder = "https://www.pricecharting.com/game/...";
 
         public const string NamePlaceholder    = "p.ej. The Legend of Zelda: Ocarina of Time";
         public const string PricePlaceholder   = "0.00";

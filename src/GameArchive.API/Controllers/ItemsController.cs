@@ -1,5 +1,6 @@
 using GameArchive.Application.Features.Items.Commands;
 using GameArchive.Application.Features.Items.Queries;
+using GameArchive.Application.Resources;
 using GameArchive.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +47,7 @@ public class ItemsController(IMediator mediator) : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateItemCommand cmd)
     {
-        if (id != cmd.Id) return BadRequest("ID mismatch");
+        if (id != cmd.Id) return BadRequest(ServerStrings.Items.IdMismatch);
         try
         {
             await mediator.Send(cmd);

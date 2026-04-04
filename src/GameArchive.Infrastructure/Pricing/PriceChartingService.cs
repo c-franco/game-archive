@@ -1,4 +1,5 @@
 using GameArchive.Application.Common;
+using GameArchive.Application.Resources;
 using GameArchive.Domain;
 using GameArchive.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -367,7 +368,7 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
         var slug = ResolveSlug(item.Platform, item.Region);
         if (slug is null)
             return new(false, null, "", null,
-                $"Plataforma/región no soportada: '{item.Platform}' / '{item.Region}'");
+                ServerStrings.PriceCharting.UnsupportedPlatformRegion(item.Platform, item.Region));
 
         var condition = ResolveCondition(item, logger);
         logger.LogInformation("=== '{N}' | {S} | {C} ===", item.Name, slug, condition);
@@ -384,10 +385,10 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
         {
             try   { productUrl = await FindProductUrlAsync(item.Name, slug, ct); }
             catch (Exception ex)
-                { return new(false, null, condition, null, $"Error en búsqueda: {ex.Message}"); }
+                { return new(false, null, condition, null, ServerStrings.PriceCharting.SearchError(ex.Message)); }
 
             if (productUrl is null)
-                return new(false, null, condition, null, "Producto no encontrado en PriceCharting");
+            return new(false, null, condition, null, ServerStrings.PriceCharting.ProductNotFound);
         }
 
         decimal? usd;
@@ -403,10 +404,10 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
             };
         }
         catch (Exception ex)
-            { return new(false, null, condition, productUrl, $"Error al obtener precio: {ex.Message}"); }
+            { return new(false, null, condition, productUrl, ServerStrings.PriceCharting.FetchPriceError(ex.Message)); }
 
         if (usd is null)
-            return new(false, null, condition, productUrl, "Precio no disponible en la página");
+            return new(false, null, condition, productUrl, ServerStrings.PriceCharting.PriceNotAvailable);
 
         var rate = await GetEurRateAsync(ct);
         var eur  = Math.Round(usd.Value * rate, 2);

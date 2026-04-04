@@ -199,12 +199,12 @@ else
 
                 <!-- URL de PriceCharting (opcional, para scraping manual) -->
                 <div class="form-group span-2">
-                    <label>URL de PriceCharting (opcional)</label>
+                    <label>@AppStrings.ItemDetail.FieldProductUrl</label>
                     <input type="url" 
                            @bind="model.ProductUrl"
-                           placeholder="https://www.pricecharting.com/game/..." />
+                           placeholder="@AppStrings.ItemDetail.ProductUrlPlaceholder" />
                     <span style="font-size:0.75rem;color:var(--text-2)">
-                        Si el scraping automático no encuentra el juego, puedes especificar la URL manualmente.
+                        @AppStrings.ItemDetail.FieldProductUrlHelp
                     </span>
                 </div>
 
