@@ -92,13 +92,6 @@ namespace GameArchive.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000004"),
-                            ItemType = 1,
-                            Label = "Manual",
-                            SortOrder = 4
-                        },
-                        new
-                        {
                             Id = new Guid("11111111-0000-0000-0000-000000000005"),
                             ItemType = 0,
                             Label = "Box",

@@ -86,10 +86,11 @@ window.priceScraper = {
         const hasManual = checked.some(l => l.includes("manual"));
 
         if (item.type === "Console") {
-            // For consoles: CIB = Box/Caja + Controller/Mando + Cables
+            // For consoles: CIB = Consola + Box/Caja + Controller/Mando + Cables
+            const hasConsole = checked.some(l => l.includes("consola"));
             const hasController = checked.some(l => l.includes("controller") || l.includes("mando"));
             const hasCables = checked.some(l => l.includes("cable"));
-            return (hasBox && hasController && hasCables) ? "CIB" : "Loose";
+            return (hasConsole && hasBox && hasController && hasCables) ? "CIB" : "Loose";
         } else {
             // For games: CIB = Box/Caja + Manual + Cartridge/Disc/Cartucho/Disco
             const hasMedia = checked.some(l =>

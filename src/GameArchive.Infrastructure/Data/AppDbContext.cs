@@ -55,10 +55,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
         // Seed default checklist templates
         b.Entity<ChecklistTemplate>().HasData(
-            new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000001"), ItemType = Domain.ItemType.Console, Label = "Caja",         SortOrder = 1 },
-            new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000002"), ItemType = Domain.ItemType.Console, Label = "Mando",      SortOrder = 2 },
-            new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000003"), ItemType = Domain.ItemType.Console, Label = "Cables",     SortOrder = 3 },
-            new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000004"), ItemType = Domain.ItemType.Console, Label = "Manual",     SortOrder = 4 },
+            new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000001"), ItemType = Domain.ItemType.Console, Label = "Consola",     SortOrder = 0 },
+            new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000002"), ItemType = Domain.ItemType.Console, Label = "Caja",         SortOrder = 1 },
+            new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000003"), ItemType = Domain.ItemType.Console, Label = "Mando",        SortOrder = 2 },
+            new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000004"), ItemType = Domain.ItemType.Console, Label = "Cables",       SortOrder = 3 },
             new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000005"), ItemType = Domain.ItemType.Game,    Label = "Caja",         SortOrder = 1 },
             new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000006"), ItemType = Domain.ItemType.Game,    Label = "Manual",       SortOrder = 2 },
             new ChecklistTemplate { Id = Guid.Parse("11111111-0000-0000-0000-000000000007"), ItemType = Domain.ItemType.Game,    Label = "Cartucho/Disco", SortOrder = 3 }

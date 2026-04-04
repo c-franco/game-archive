@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GameArchive.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260401115601_AddPriceTracking")]
-    partial class AddPriceTracking
+    [Migration("20260404112555_RemoveConsoleManual")]
+    partial class RemoveConsoleManual
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -73,19 +73,26 @@ namespace GameArchive.Infrastructure.Migrations
                         {
                             Id = new Guid("11111111-0000-0000-0000-000000000001"),
                             ItemType = 1,
-                            Label = "Box",
-                            SortOrder = 1
+                            Label = "Consola",
+                            SortOrder = 0
                         },
                         new
                         {
                             Id = new Guid("11111111-0000-0000-0000-000000000002"),
                             ItemType = 1,
-                            Label = "Controller",
-                            SortOrder = 2
+                            Label = "Caja",
+                            SortOrder = 1
                         },
                         new
                         {
                             Id = new Guid("11111111-0000-0000-0000-000000000003"),
+                            ItemType = 1,
+                            Label = "Mando",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-0000-0000-0000-000000000004"),
                             ItemType = 1,
                             Label = "Cables",
                             SortOrder = 3
@@ -94,7 +101,7 @@ namespace GameArchive.Infrastructure.Migrations
                         {
                             Id = new Guid("11111111-0000-0000-0000-000000000005"),
                             ItemType = 0,
-                            Label = "Box",
+                            Label = "Caja",
                             SortOrder = 1
                         },
                         new
@@ -108,7 +115,7 @@ namespace GameArchive.Infrastructure.Migrations
                         {
                             Id = new Guid("11111111-0000-0000-0000-000000000007"),
                             ItemType = 0,
-                            Label = "Cartridge/Disc",
+                            Label = "Cartucho/Disco",
                             SortOrder = 3
                         });
                 });
@@ -151,6 +158,10 @@ namespace GameArchive.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
                         .HasDefaultValue("");
+
+                    b.Property<string>("ProductUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<DateOnly?>("PurchaseDate")
                         .HasColumnType("TEXT");

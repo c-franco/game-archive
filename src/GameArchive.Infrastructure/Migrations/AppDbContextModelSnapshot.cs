@@ -70,29 +70,29 @@ namespace GameArchive.Infrastructure.Migrations
                         {
                             Id = new Guid("11111111-0000-0000-0000-000000000001"),
                             ItemType = 1,
+                            Label = "Consola",
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-0000-0000-0000-000000000002"),
+                            ItemType = 1,
                             Label = "Caja",
                             SortOrder = 1
                         },
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000002"),
+                            Id = new Guid("11111111-0000-0000-0000-000000000003"),
                             ItemType = 1,
                             Label = "Mando",
                             SortOrder = 2
                         },
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000003"),
+                            Id = new Guid("11111111-0000-0000-0000-000000000004"),
                             ItemType = 1,
                             Label = "Cables",
                             SortOrder = 3
-                        },
-                        new
-                        {
-                            Id = new Guid("11111111-0000-0000-0000-000000000004"),
-                            ItemType = 1,
-                            Label = "Manual",
-                            SortOrder = 4
                         },
                         new
                         {

@@ -166,11 +166,12 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
 
         if (item.Type == ItemType.Console)
         {
+            bool console = ticked.Any(l => l.Contains("consola"));
             bool controller = ticked.Any(l => l.Contains("controller") || l.Contains("mando"));
             bool cables = ticked.Any(l => l.Contains("cable"));
-            bool isCib = box && controller && cables;
-            logger?.LogInformation("[ResolveCondition] Console: HasController={Ctrl} HasCables={Cables} Result={Result}", 
-                controller, cables, isCib ? "CIB" : "Loose");
+            bool isCib = console && box && controller && cables;
+            logger?.LogInformation("[ResolveCondition] Console: HasConsole={Console} HasController={Ctrl} HasCables={Cables} Result={Result}", 
+                console, controller, cables, isCib ? "CIB" : "Loose");
             return isCib ? "CIB" : "Loose";
         }
         else
