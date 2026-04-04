@@ -183,20 +183,23 @@ else
         }
     </div>
 
-    <!-- ── Platforms ─────────────────────────────────────────────────────── -->
-    <div class="card" style="margin-bottom:20px">
-        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">@AppStrings.Settings.PlatformsSectionTitle</div>
-        <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">@AppStrings.Settings.PlatformsHint</div>
-        <textarea style="min-height:220px;font-family:'Space Mono',monospace;font-size:0.85rem;resize:vertical"
-                  @bind="platformsText" placeholder="@AppStrings.Settings.PlatformsPlaceholder"></textarea>
-    </div>
+    <!-- ── Platforms & Regions ─────────────────────────────────────────────── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <!-- Platforms -->
+        <div class="card">
+            <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">@AppStrings.Settings.PlatformsSectionTitle</div>
+            <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">@AppStrings.Settings.PlatformsHint</div>
+            <textarea style="min-height:220px;font-family:'Space Mono',monospace;font-size:0.85rem;resize:vertical"
+                      @bind="platformsText" placeholder="@AppStrings.Settings.PlatformsPlaceholder"></textarea>
+        </div>
 
-    <!-- ── Regions ───────────────────────────────────────────────────────── -->
-    <div class="card" style="margin-bottom:20px">
-        <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">@AppStrings.Settings.RegionsSectionTitle</div>
-        <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">@AppStrings.Settings.RegionsHint</div>
-        <textarea style="min-height:180px;font-family:'Space Mono',monospace;font-size:0.85rem;resize:vertical"
-                  @bind="regionsText" placeholder="@AppStrings.Settings.RegionsPlaceholder"></textarea>
+        <!-- Regions -->
+        <div class="card">
+            <div style="font-weight:600;font-size:0.95rem;margin-bottom:6px">@AppStrings.Settings.RegionsSectionTitle</div>
+            <div style="font-size:0.85rem;color:var(--accent);margin-bottom:12px">@AppStrings.Settings.RegionsHint</div>
+            <textarea style="min-height:180px;font-family:'Space Mono',monospace;font-size:0.85rem;resize:vertical"
+                      @bind="regionsText" placeholder="@AppStrings.Settings.RegionsPlaceholder"></textarea>
+        </div>
     </div>
 
     <!-- ── Save ──────────────────────────────────────────────────────────── -->
