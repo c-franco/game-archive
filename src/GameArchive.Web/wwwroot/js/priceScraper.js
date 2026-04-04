@@ -45,6 +45,7 @@ window.priceScraper = {
         "playstation 2|pal": "pal-ps2",
         "playstation 3|pal": "pal-ps3",
         "playstation 4|pal": "pal-ps4",
+        "playstation 5|pal": "pal-ps5",
         "psp|pal": "pal-psp",
         "ps vita|pal": "pal-ps-vita",
         "playstation|ntsc-u": "playstation",
