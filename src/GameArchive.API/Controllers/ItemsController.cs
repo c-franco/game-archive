@@ -4,6 +4,7 @@ using GameArchive.Application.Resources;
 using GameArchive.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using static GameArchive.Application.Features.Items.Commands.MarkAsOwnedHandler;
 
 namespace GameArchive.API.Controllers;
 
@@ -100,6 +101,26 @@ public class ItemsController(IMediator mediator) : ControllerBase
             return NotFound();
         }
     }
+
+    [HttpPost("{id:guid}/price")]
+    public async Task<IActionResult> UpdatePrice(Guid id, [FromBody] UpdatePriceRequest request)
+    {
+        try
+        {
+            await mediator.Send(new UpdateItemPriceCommand(
+                id,
+                request.EstimatedValue,
+                request.PriceSource,
+                request.ProductUrl));
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    public record UpdatePriceRequest(decimal? EstimatedValue, string? PriceSource, string? ProductUrl);
 
     [HttpGet("platforms")]
     public async Task<IActionResult> GetPlatforms()

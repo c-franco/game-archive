@@ -292,3 +292,29 @@ public class MarkAsOwnedHandler(IAppDbContext db) : IRequestHandler<MarkAsOwnedC
         return ItemStatus.Owned.ToString();
     }
 }
+
+// ── UPDATE PRICE ───────────────────────────────────────────────────────────
+
+public record UpdateItemPriceCommand(
+    Guid Id,
+    decimal? EstimatedValue,
+    string? PriceSource,
+    string? ProductUrl
+) : IRequest;
+
+public class UpdateItemPriceHandler(IAppDbContext db) : IRequestHandler<UpdateItemPriceCommand>
+{
+    public async Task Handle(UpdateItemPriceCommand cmd, CancellationToken ct)
+    {
+        var item = await db.Items.FindAsync([cmd.Id], ct)
+            ?? throw new KeyNotFoundException(ServerStrings.Items.NotFoundFmt(cmd.Id));
+
+        item.EstimatedValue = cmd.EstimatedValue;
+        item.PriceSource = cmd.PriceSource;
+        item.ProductUrl = cmd.ProductUrl ?? item.ProductUrl;
+        item.PriceLastFetchedAt = DateTimeOffset.UtcNow;
+        item.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+    }
+}

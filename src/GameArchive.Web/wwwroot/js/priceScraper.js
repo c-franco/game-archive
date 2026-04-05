@@ -112,13 +112,40 @@ window.priceScraper = {
     },
 
     // Fetch HTML via a CORS proxy since PriceCharting doesn't allow cross-origin
-    async _fetchHtml(url) {
+    async _fetchHtml(url, retries = 2) {
         // Use allorigins.win as a free CORS proxy
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-        const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
-        if (!resp.ok) throw new Error(`Proxy error ${resp.status}`);
-        const json = await resp.json();
-        return json.contents ?? "";
+        
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                const resp = await fetch(proxyUrl, { 
+                    signal: AbortSignal.timeout(30000) // 30 segundos
+                });
+                
+                if (!resp.ok) {
+                    throw new Error(`Proxy error ${resp.status}`);
+                }
+                
+                const json = await resp.json();
+                
+                if (!json.contents || json.contents.length === 0) {
+                    throw new Error("Respuesta vacía del proxy");
+                }
+                
+                return json.contents;
+            } catch (e) {
+                console.warn(`[PriceScraper] Intento ${attempt + 1} fallido: ${e.message}`);
+                
+                if (attempt === retries) {
+                    throw e;
+                }
+                
+                // Esperar antes de reintentar
+                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            }
+        }
+        
+        throw new Error("Todos los intentos fallaron");
     },
 
     // Extract price from HTML by element id
@@ -156,15 +183,27 @@ window.priceScraper = {
             if (html.includes("used-price") || html.includes("complete-price")) {
                 return directUrl;
             }
-        } catch (_) { /* fall through */ }
+        } catch (e) {
+            console.warn(`[PriceScraper] URL directa falló: ${e.message}`);
+        }
 
-        // 2. Search
+        // 2. Search con mejor manejo de errores
         const searchUrl = `https://www.pricecharting.com/search-products?type=prices&q=${encodeURIComponent(name)}`;
         let searchHtml;
         try {
             searchHtml = await this._fetchHtml(searchUrl);
         } catch (e) {
-            throw new Error(`Search request failed: ${e.message}`);
+            console.error(`[PriceScraper] Error en búsqueda: ${e.message}`);
+            
+            // Mensaje más útil para el usuario
+            if (e.name === "TimeoutError" || e.message.includes("timeout")) {
+                throw new Error("La búsqueda tardó demasiado. Intenta especificar la URL manualmente en el campo 'URL de PriceCharting'.");
+            }
+            if (e.message.includes("Content-Length") || e.message.includes("network")) {
+                throw new Error("Error de red al contactar PriceCharting. Intenta de nuevo más tarde o especifica la URL manualmente.");
+            }
+            
+            throw new Error(`Error en búsqueda: ${e.message}`);
         }
 
         // Find /game/... links, prefer ones containing the console slug

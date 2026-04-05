@@ -73,15 +73,7 @@ else
             <button class="btn btn-secondary"
                     @onclick="StartPriceFetch"
                     disabled="@(fetchState == FetchState.Running)">
-                @if (fetchState == FetchState.Running)
-                {
-                    <span class="spinner" style="width:14px;height:14px;border-width:2px;flex-shrink:0"></span>
-                    <span>Actualizando…</span>
-                }
-                else
-                {
-                    <span>🔍 Actualizar todos los precios</span>
-                }
+                <span>🔍 Actualizar todos los precios</span>
             </button>
         </div>
 

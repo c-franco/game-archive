@@ -164,6 +164,16 @@ public static class AppStrings
         public const string ChecklistEmpty     = "Sin artículos en el checklist.\nConfigura las plantillas en Ajustes.";
         public static string ChecklistProgress(int done, int total) => $"{done} / {total} completados";
 
+        // Scrape price
+        public const string ScrapePriceButton      = "🔍 Actualizar valor estimado";
+        public const string ScrapePriceSearching   = "Buscando…";
+        public static string ScrapePriceSuccessFmt(decimal price, string condition)
+            => $"Precio actualizado: €{price:F2} (condición: {condition})";
+        public const string ScrapePriceSaveError   = "Error al guardar el precio en el servidor";
+        public const string ScrapePriceNotFound    = "No se pudo obtener el precio";
+        public static string ScrapePriceErrorFmt(string message)
+            => $"Error: {message}";
+
         // Validation messages
         public const string ValidationNameRequired   = "El nombre es obligatorio.";
         public const string ValidationNameMaxLength  = "El nombre no puede superar los 200 caracteres.";

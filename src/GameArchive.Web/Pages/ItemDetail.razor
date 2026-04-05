@@ -2,6 +2,7 @@
 @page "/items/{Id:guid}"
 @inject HttpClient Http
 @inject NavigationManager Nav
+@inject IJSRuntime Js
 @using GameArchive.Web.Resources
 
 <!-- Modal eliminar -->
@@ -231,35 +232,53 @@ else
 
         @if (!IsWishlistItem)
         {
-        <!-- Checklist -->
-        <div class="card">
-            <div style="font-weight:600;margin-bottom:14px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">
-                @AppStrings.ItemDetail.ChecklistTitle
-            </div>
+        <!-- Columna derecha: Checklist + Botón scrapeo -->
+        <div>
+            <!-- Checklist -->
+            <div class="card">
+                <div style="font-weight:600;margin-bottom:14px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2)">
+                    @AppStrings.ItemDetail.ChecklistTitle
+                </div>
 
-            @if (!model.ChecklistEntries.Any())
-            {
-                <div style="color:var(--text-3);font-size:0.875rem;text-align:center;padding:24px 0">
-                    Sin artículos en el checklist.<br />Configura las plantillas en Ajustes.
-                </div>
-            }
-            else
-            {
-                <div class="checklist">
-                    @foreach (var entry in model.ChecklistEntries.OrderBy(e => e.SortOrder))
-                    {
-                        <div class="checklist-item">
-                            <input type="checkbox" id="chk-@entry.Id" @bind="entry.IsChecked" />
-                            <label for="chk-@entry.Id">@entry.Label</label>
-                        </div>
-                    }
-                </div>
-                <div style="margin-top:12px;font-size:0.8rem;color:var(--text-2)">
-                    @AppStrings.ItemDetail.ChecklistProgress(
-                        model.ChecklistEntries.Count(e => e.IsChecked),
-                        model.ChecklistEntries.Count)
-                </div>
-            }
+                @if (!model.ChecklistEntries.Any())
+                {
+                    <div style="color:var(--text-3);font-size:0.875rem;text-align:center;padding:24px 0">
+                        Sin artículos en el checklist.<br />Configura las plantillas en Ajustes.
+                    </div>
+                }
+                else
+                {
+                    <div class="checklist">
+                        @foreach (var entry in model.ChecklistEntries.OrderBy(e => e.SortOrder))
+                        {
+                            <div class="checklist-item">
+                                <input type="checkbox" id="chk-@entry.Id" @bind="entry.IsChecked" />
+                                <label for="chk-@entry.Id">@entry.Label</label>
+                            </div>
+                        }
+                    </div>
+                    <div style="margin-top:12px;font-size:0.8rem;color:var(--text-2)">
+                        @AppStrings.ItemDetail.ChecklistProgress(
+                            model.ChecklistEntries.Count(e => e.IsChecked),
+                            model.ChecklistEntries.Count)
+                    </div>
+                }
+            </div>
+            
+            <!-- Botón scrapear precio (debajo de la card del checklist) -->
+            <button class="btn btn-secondary" style="margin-top:12px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px" 
+                    @onclick="ScrapePriceAsync" 
+                    disabled="@scrapingPrice">
+                @if (scrapingPrice)
+                {
+                    <span class="spinner" style="width:14px;height:14px;border-width:2px;flex-shrink:0"></span>
+                    <span>@AppStrings.ItemDetail.ScrapePriceSearching</span>
+                }
+                else
+                {
+                    <span>@AppStrings.ItemDetail.ScrapePriceButton</span>
+                }
+            </button>
         </div>
         }
 
@@ -274,6 +293,7 @@ else
     bool IsNew => Id == null;
     bool IsWishlistItem => model.Status == "Wishlist";
     bool loading = true, saving = false;
+    bool scrapingPrice = false;
     bool showDeleteModal = false;
     string errorMsg = "", successMsg = "";
 
@@ -554,4 +574,63 @@ else
         availablePlatforms = settings?.Platforms ?? [];
         availableRegions = settings?.Regions ?? [];
     }
+
+    // ── Scrape Price ──────────────────────────────────────────────────────────
+
+    async Task ScrapePriceAsync()
+    {
+        Console.WriteLine("[ScrapePriceAsync] Iniciando...");
+        if (IsNew || Id == null)
+        {
+            Console.WriteLine("[ScrapePriceAsync] Cancelado: es nuevo o sin ID");
+            return;
+        }
+
+        scrapingPrice = true;
+        errorMsg = "";
+        successMsg = "";
+        StateHasChanged();
+
+        try
+        {
+            Console.WriteLine($"[ScrapePriceAsync] Llamando al endpoint del backend para item {Id}");
+            
+            var resp = await Http.PostAsync($"api/price/fetch/{Id}", null);
+            
+            if (!resp.IsSuccessStatusCode)
+            {
+                var errorText = await resp.Content.ReadAsStringAsync();
+                errorMsg = $"Error del servidor: {resp.StatusCode}";
+                Console.WriteLine($"[ScrapePriceAsync] Error HTTP: {resp.StatusCode}, {errorText}");
+                return;
+            }
+
+            var result = await resp.Content.ReadFromJsonAsync<PriceFetchResponse>();
+            
+            Console.WriteLine($"[ScrapePriceAsync] Resultado: success={result?.success}, priceEur={result?.priceEur}, error={result?.error}");
+
+            if (result?.success == true && result.priceEur.HasValue)
+            {
+                model.EstimatedValue = result.priceEur;
+                model.ProductUrl = result.productUrl ?? model.ProductUrl;
+                successMsg = AppStrings.ItemDetail.ScrapePriceSuccessFmt(result.priceEur.Value, result.condition ?? "Unknown");
+            }
+            else
+            {
+                errorMsg = result?.error ?? AppStrings.ItemDetail.ScrapePriceNotFound;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ScrapePriceAsync] Excepción: {ex}");
+            errorMsg = AppStrings.ItemDetail.ScrapePriceErrorFmt(ex.Message);
+        }
+        finally
+        {
+            scrapingPrice = false;
+            StateHasChanged();
+        }
+    }
+
+    record PriceFetchResponse(bool success, decimal? priceEur, string? condition, string? productUrl, string? error);
 }
