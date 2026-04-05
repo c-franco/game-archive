@@ -117,7 +117,7 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
         { "playstation|pal",      "pal-playstation" },
         { "playstation 2|pal",    "pal-ps2" },
         { "playstation 3|pal",    "pal-ps3" },
-        { "playstation 4|pal",    "pal-ps4" },
+        { "playstation 4|pal",    "pal-playstation-4" },
         { "playstation 5|pal",    "pal-ps5" },
         { "psp|pal",              "pal-psp" },
         { "ps vita|pal",          "pal-ps-vita" },
