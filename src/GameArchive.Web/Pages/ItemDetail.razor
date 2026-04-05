@@ -198,16 +198,19 @@ else
                               placeholder="@AppStrings.ItemDetail.NotesPlaceholder"></textarea>
                 </div>
 
-                <!-- URL de PriceCharting (opcional, para scraping manual) -->
-                <div class="form-group span-2">
-                    <label>@AppStrings.ItemDetail.FieldProductUrl</label>
-                    <input type="url" 
-                           @bind="model.ProductUrl"
-                           placeholder="@AppStrings.ItemDetail.ProductUrlPlaceholder" />
-                    <span style="font-size:0.75rem;color:var(--text-2)">
-                        @AppStrings.ItemDetail.FieldProductUrlHelp
-                    </span>
-                </div>
+                @if (!IsWishlistItem)
+                {
+                    <!-- URL de PriceCharting (opcional, para scraping manual) -->
+                    <div class="form-group span-2">
+                        <label>@AppStrings.ItemDetail.FieldProductUrl</label>
+                        <input type="url" 
+                               @bind="model.ProductUrl"
+                               placeholder="@AppStrings.ItemDetail.ProductUrlPlaceholder" />
+                        <span style="font-size:0.75rem;color:var(--text-2)">
+                            @AppStrings.ItemDetail.FieldProductUrlHelp
+                        </span>
+                    </div>
+                }
 
             </div>
 
