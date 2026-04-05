@@ -142,6 +142,9 @@ public class PriceChartingService(IAppDbContext db, ILogger<PriceChartingService
         { "sega mega drive|ntsc-u", "sega-genesis" },
         { "sega saturn|ntsc-u",     "sega-saturn" },
         { "sega dreamcast|ntsc-u",  "sega-dreamcast" },
+        { "pc|pal",                 "pc-games" },
+        { "pc|ntsc-u",              "pc-games" },
+        { "pc|ntsc-j",              "pc-games" },
     };
 
     public static string? ResolveSlug(string platform, string region)
