@@ -1,0 +1,358 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   GameArchive – Responsive overrides
+   Tablet  ≤ 1024px  (sidebar collapses, layout adjusts)
+   Mobile  ≤  768px  (single-column, hamburger menu)
+   Tiny    ≤  480px  (extra compact spacing)
+   ═══════════════════════════════════════════════════════════════════════════
+   ⚠  Desktop (> 1024px) is NEVER touched – all rules are inside media queries.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ── Hamburger button (hidden on desktop) ─────────────────────────────────── */
+
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--transition), border-color var(--transition);
+    padding: 0;
+}
+
+.hamburger:hover {
+    background: var(--surface-2);
+    border-color: var(--border-2);
+}
+
+.hamburger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--text-2);
+    border-radius: 2px;
+    transition: transform 180ms ease, opacity 150ms ease;
+}
+
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+
+/* ── Sidebar overlay backdrop (mobile) ────────────────────────────────────── */
+
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 99;
+    opacity: 0;
+    transition: opacity 200ms ease;
+    pointer-events: none;
+}
+
+.sidebar-backdrop.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TABLET  ≤ 1024px
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+
+    /* Sidebar shrinks to icon-only rail */
+    .sidebar {
+        width: 60px;
+        padding: 16px 8px;
+        overflow: hidden;
+    }
+
+    .sidebar-brand {
+        padding: 4px 0 16px;
+        justify-content: center;
+    }
+
+    .brand-name { display: none; }
+
+    .nav-link {
+        justify-content: center;
+        padding: 10px 8px;
+        gap: 0;
+    }
+
+    .nav-link span:last-child { display: none; }
+    .nav-icon { width: 24px; font-size: 1.15rem; }
+
+    /* Main content shifts accordingly */
+    .main-content {
+        margin-left: 60px;
+        padding: 24px 20px;
+    }
+
+    /* Stat grid: 3 cols instead of auto-fit cramming */
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* Dashboard charts: stack */
+    .main-content > div[style*="grid-template-columns:1fr 1fr"] {
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    /* Wishlist platform grid: 2 cols */
+    .wishlist-platform-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE  ≤ 768px
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+    /* ── Show hamburger ─────────────────────────────────────────────────── */
+    .hamburger { display: flex; }
+
+    /* ── Sidebar: off-canvas ────────────────────────────────────────────── */
+    .sidebar {
+        width: 220px;
+        transform: translateX(-100%);
+        transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+        overflow: visible;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Restore sidebar content when open */
+    .sidebar.open .brand-name { display: block; }
+    .sidebar.open .nav-link   { justify-content: flex-start; padding: 9px 12px; gap: 10px; }
+    .sidebar.open .nav-link span:last-child { display: block; }
+    .sidebar.open .nav-icon { width: 20px; font-size: 1rem; }
+    .sidebar.open .sidebar-brand { padding: 4px 8px 20px; justify-content: flex-start; }
+
+    .sidebar-backdrop { display: block; }
+
+    /* ── Main content: full width ───────────────────────────────────────── */
+    .main-content {
+        margin-left: 0;
+        padding: 16px;
+    }
+
+    /* ── Page header: wrap with hamburger ──────────────────────────────── */
+    .page-header {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    /* Stats: 2 cols */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .stat-value { font-size: 1.5rem; }
+
+    /* Forms: single column */
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-grid .span-2 { grid-column: 1; }
+
+    /* Item detail: stack main form + checklist column */
+    div[style*="grid-template-columns:1fr 320px"] {
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    /* Filters */
+    .filters-bar input,
+    .filters-bar select { max-width: 100%; }
+
+    .filters-row-1 { flex-wrap: wrap; gap: 8px; }
+    .search-wrapper { flex: 1 1 200px; }
+    .sort-group { flex-shrink: 0; }
+
+    .filters-row-2 { gap: 6px; }
+
+    /* Table: allow horizontal scroll */
+    .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    table { min-width: 640px; }
+
+    /* Wishlist */
+    .wishlist-platform-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .wishlist-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wishlist-header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .wishlist-view-toggle { margin-right: 0; }
+
+    /* Dashboard inline style overrides */
+    .main-content > div[style*="grid-template-columns:1fr 1fr"] {
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    /* Cards */
+    .card { padding: 16px; }
+
+    /* Pagination footer */
+    .table-pagination-footer {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .pagination-summary,
+    .pagination-size {
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Modal */
+    .modal-box {
+        margin: 16px;
+        padding: 20px;
+    }
+
+    /* Settings: stack template columns */
+    div[style*="grid-template-columns:1fr 1fr;gap:20px"] {
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    /* Confirm modal portal */
+    .modal-box {
+        max-width: calc(100vw - 32px);
+    }
+
+    /* Total value badge in subtitle */
+    .total-value-badge { display: block; margin-top: 2px; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TINY  ≤ 480px
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+
+    .main-content { padding: 12px; }
+
+    /* Stats: single column */
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .stat-card { padding: 14px; }
+    .stat-value { font-size: 1.3rem; }
+    .stat-label { font-size: 0.72rem; }
+
+    /* Page title smaller */
+    .page-title { font-size: 1.15rem; }
+
+    /* Wishlist platform: single col */
+    .wishlist-platform-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Filter dropdowns don't overflow */
+    .filter-dropdown {
+        min-width: 160px;
+        max-width: calc(100vw - 32px);
+    }
+
+    /* Buttons: slightly smaller */
+    .btn { padding: 7px 12px; font-size: 0.82rem; }
+    .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
+
+    /* Item detail action buttons row */
+    div[style*="justify-content:flex-end"] {
+        flex-wrap: wrap;
+    }
+
+    /* Settings save button */
+    .btn-save { width: 100%; justify-content: center; }
+
+    /* Checklist item label wraps */
+    .checklist-item label { font-size: 0.82rem; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Mobile header bar (hamburger + brand + CTA)
+   Injected via JS into .app-shell on mobile
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.mobile-header {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 52px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0 14px;
+        z-index: 98;
+    }
+
+    .mobile-header-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .mobile-header-icon {
+        font-size: 1.2rem;
+        color: var(--accent);
+    }
+
+    /* Push main content down below fixed header */
+    .main-content {
+        padding-top: calc(52px + 16px);
+    }
+}

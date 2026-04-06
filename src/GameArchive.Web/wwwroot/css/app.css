@@ -755,15 +755,6 @@ td {
         color: var(--red);
     }
 
-/* ── Responsive ────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-    .sidebar { transform: translateX(-100%); }
-    .main-content { margin-left: 0; padding: 16px; }
-    .form-grid { grid-template-columns: 1fr; }
-    .filters-bar input, .filters-bar select { max-width: 100%; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-}
-
 /* ── Modal ─────────────────────────────────────────────────────────────────── */
 .modal-overlay {
     position: fixed;
@@ -897,17 +888,4 @@ td {
     padding: 4px 0px 4px 10px;
     font-size: 0.75rem;
     line-height: 1;
-}
-
-@media (max-width: 900px) {
-    .table-pagination-footer {
-        grid-template-columns: 1fr;
-        justify-items: center;
-    }
-
-    .pagination-summary,
-    .pagination-size {
-        justify-content: center;
-        text-align: center;
-    }
 }
