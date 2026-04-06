@@ -70,10 +70,12 @@ public class GetItemsHandler(IAppDbContext db) : IRequestHandler<GetItemsQuery, 
 
         query = (sortBy, q.Descending) switch
         {
-            ("date", false) => query.OrderBy(i => i.PurchaseDate),
-            ("date", true)  => query.OrderByDescending(i => i.PurchaseDate),
-            (_,      false) => query.OrderBy(i => i.Name),
-            (_,      true)  => query.OrderByDescending(i => i.Name),
+            ("date", false)     => query.OrderBy(i => i.PurchaseDate),
+            ("date", true)      => query.OrderByDescending(i => i.PurchaseDate),
+            ("platform", false) => query.OrderBy(i => i.Platform).ThenBy(i => i.Name),
+            ("platform", true)  => query.OrderByDescending(i => i.Platform).ThenBy(i => i.Name),
+            (_,      false)     => query.OrderBy(i => i.Name),
+            (_,      true)      => query.OrderByDescending(i => i.Name),
         };
 
         var items = await query.ToListAsync(ct);

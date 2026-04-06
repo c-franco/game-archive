@@ -86,6 +86,7 @@ public static class AppStrings
         public const string SortDate           = "Ordenar: Fecha";
         public const string SortPrice          = "Ordenar: Precio";
         public const string SortValue          = "Ordenar: Valor";
+        public const string SortPlatform       = "Ordenar: Plataforma";
         public const string SortDesc          = "↓ Desc";
         public const string SortAsc             = "↑ Asc";
         public const string SortDescendingTitle = "Descendente";

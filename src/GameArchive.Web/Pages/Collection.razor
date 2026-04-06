@@ -62,6 +62,7 @@
             <option value="date">@AppStrings.Collection.SortDate</option>
             <option value="price">@AppStrings.Collection.SortPrice</option>
             <option value="value">@AppStrings.Collection.SortValue</option>
+            <option value="platform">@AppStrings.Collection.SortPlatform</option>
         </select>
         <button class="btn btn-secondary btn-sm sort-dir-btn" @onclick="ToggleSort"
                 title="@(descending ? "Descendente" : "Ascendente")">
@@ -351,7 +352,7 @@ else
     const string SortByStorageKey     = "collection.sortBy";
     const string SortDescStorageKey   = "collection.sortDesc";
     const string PageSizeStorageKey   = "collection.pageSize";
-    static readonly HashSet<string> ValidSortFields = ["name", "date", "price", "value"];
+    static readonly HashSet<string> ValidSortFields = ["name", "date", "price", "value", "platform"];
     static readonly int[] PageSizeOptions = [10, 15, 20];
 
     // ── Opciones estáticas ─────────────────────────────────────────────────────
