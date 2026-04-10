@@ -16,13 +16,14 @@ public class ItemsController(IMediator mediator) : ControllerBase
     public Task<List<Application.DTOs.CollectionItemDto>> Get(
         [FromQuery] string? search,
         [FromQuery] ItemType? type,
-        [FromQuery] List<string>? platform,   // acepta platform=SNES&platform=N64
+        [FromQuery] List<string>? platform,
         [FromQuery] string? condition,
-        [FromQuery] List<string>? region,     // acepta region=PAL&region=NTSC-U
+        [FromQuery] List<string>? region,
         [FromQuery] ItemStatus? status,
         [FromQuery] string sortBy = "name",
-        [FromQuery] bool desc = false)
-        => mediator.Send(new GetItemsQuery(search, type, platform, condition, region, status, sortBy, desc));
+        [FromQuery] bool desc = false,
+        [FromQuery] string? checklistFilter = null)   // ← NEW
+        => mediator.Send(new GetItemsQuery(search, type, platform, condition, region, status, sortBy, desc, checklistFilter));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)

@@ -14,7 +14,8 @@ public record GetItemsQuery(
     List<string>? Regions,     // multi-select
     ItemStatus? Status,
     string SortBy = "name",
-    bool Descending = false
+    bool Descending = false,
+    string? ChecklistFilter = null  // "cart-only" | "missing-box" | "missing-manual" | "complete" | "incomplete"
 ) : IRequest<List<CollectionItemDto>>;
 
 public class GetItemsHandler(IAppDbContext db) : IRequestHandler<GetItemsQuery, List<CollectionItemDto>>
@@ -48,6 +49,7 @@ public class GetItemsHandler(IAppDbContext db) : IRequestHandler<GetItemsQuery, 
         if (sortBy is "price" or "value")
         {
             var filteredItems = await query.ToListAsync(ct);
+            filteredItems = ApplyChecklistFilter(filteredItems, q.ChecklistFilter);
             filteredItems = (sortBy, q.Descending) switch
             {
                 ("price", false) => filteredItems.OrderBy(i => i.PurchasePrice ?? decimal.MaxValue)
@@ -79,8 +81,88 @@ public class GetItemsHandler(IAppDbContext db) : IRequestHandler<GetItemsQuery, 
         };
 
         var items = await query.ToListAsync(ct);
+        items = ApplyChecklistFilter(items, q.ChecklistFilter);
         return items.Select(MapToDto).ToList();
     }
+
+    /// <summary>
+    /// Filters items by checklist completeness. Evaluated in memory after DB query.
+    /// Supported values:
+    ///   "cart-only"      → solo tiene Cartucho/Disco (ni Caja ni Manual marcados)
+    ///   "missing-box"    → tiene Cartucho pero le falta Caja
+    ///   "missing-manual" → tiene Cartucho pero le falta Manual
+    ///   "complete"       → todos los ítems del checklist marcados
+    ///   "incomplete"     → al menos un ítem del checklist sin marcar
+    /// </summary>
+    private static List<Domain.Entities.CollectionItem> ApplyChecklistFilter(
+        List<Domain.Entities.CollectionItem> items,
+        string? filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+            return items;
+
+        return filter switch
+        {
+            "cart-only" => items.Where(i =>
+            {
+                var entries = i.ChecklistEntries;
+                if (entries.Count == 0) return false;
+                var hasMedia = entries.Any(e => e.IsChecked && IsMedia(e.Label));
+                var hasBox   = entries.Any(e => e.IsChecked && IsBox(e.Label));
+                var hasManual = entries.Any(e => e.IsChecked && IsManual(e.Label));
+                return hasMedia && !hasBox && !hasManual;
+            }).ToList(),
+
+            "missing-box" => items.Where(i =>
+            {
+                var entries = i.ChecklistEntries;
+                if (entries.Count == 0) return false;
+                var hasMedia = entries.Any(e => e.IsChecked && IsMedia(e.Label));
+                var hasBox   = entries.Any(e => e.IsChecked && IsBox(e.Label));
+                // Has cartridge/disc but no box
+                return hasMedia && !hasBox;
+            }).ToList(),
+
+            "missing-manual" => items.Where(i =>
+            {
+                var entries = i.ChecklistEntries;
+                if (entries.Count == 0) return false;
+                var hasMedia  = entries.Any(e => e.IsChecked && IsMedia(e.Label));
+                var hasManual = entries.Any(e => e.IsChecked && IsManual(e.Label));
+                // Has cartridge/disc but no manual
+                return hasMedia && !hasManual;
+            }).ToList(),
+
+            "complete" => items.Where(i =>
+                i.ChecklistEntries.Count > 0 &&
+                i.ChecklistEntries.All(e => e.IsChecked)
+            ).ToList(),
+
+            "incomplete" => items.Where(i =>
+                i.ChecklistEntries.Count > 0 &&
+                i.ChecklistEntries.Any(e => !e.IsChecked)
+            ).ToList(),
+
+            _ => items
+        };
+    }
+
+    // Label helpers — match both English and Spanish labels used in the app
+    private static bool IsMedia(string label)
+    {
+        var l = label.ToLowerInvariant();
+        return l.Contains("cartucho") || l.Contains("disco") ||
+               l.Contains("cartridge") || l.Contains("disc") || l.Contains("disk");
+    }
+
+    private static bool IsBox(string label)
+    {
+        var l = label.ToLowerInvariant();
+        return l.Contains("caja") || l.Contains("box");
+    }
+
+    private static bool IsManual(string label)
+        => label.ToLowerInvariant().Contains("manual");
 
     private static CollectionItemDto MapToDto(Domain.Entities.CollectionItem i) => new(
         i.Id, i.Name, i.Type.ToString(), i.Platform, i.Region, i.Condition,

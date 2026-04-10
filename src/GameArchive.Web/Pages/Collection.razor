@@ -200,6 +200,33 @@
             </div>
         }
     </div>
+
+    <!-- ── Checklist (selección única) ── NEW ────────────────────────────── -->
+    <div class="filter-dropdown-wrap">
+        <button class="filter-cat-btn @(filterChecklist != "" ? "active" : "")"
+                @onclick='e => ToggleDropdown("checklist")'>
+            @ChecklistFilterLabel
+            <span class="cat-arrow">▾</span>
+        </button>
+        @if (openDropdown == "checklist")
+        {
+            <div class="filter-dropdown">
+                <div class="filter-dropdown-item @(filterChecklist == "" ? "selected" : "")"
+                     @onclick='async () => await SetSingleFilter("checklist", "")'>
+                    <span class="fdi-dot"></span>Todos
+                </div>
+                @foreach (var (val, label) in ChecklistFilterOptions)
+                {
+                    var vCopy = val; var lCopy = label;
+                    <div class="filter-dropdown-item @(filterChecklist == vCopy ? "selected" : "")"
+                         @onclick='async () => await SetSingleFilter("checklist", vCopy)'>
+                        <span class="fdi-dot"></span>@lCopy
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
 </div>
 
 <!-- ── Fila 3: chips de filtros activos ────────────────────────────────────── -->
@@ -335,15 +362,16 @@ else
     List<string> platforms = [];
     List<string> regions = [];
 
-    string          searchTerm      = "";
-    string          filterType      = "";
-    HashSet<string> filterPlatforms = [];
-    HashSet<string> filterRegions   = [];
-    string          filterCondition = "";
-    string          sortBy          = "name";
-    bool            descending      = false;
-    int             currentPage     = 1;
-    int             pageSize        = 20;
+    string          searchTerm       = "";
+    string          filterType       = "";
+    HashSet<string> filterPlatforms  = [];
+    HashSet<string> filterRegions    = [];
+    string          filterCondition  = "";
+    string          filterChecklist  = "";   // ← NEW
+    string          sortBy           = "name";
+    bool            descending       = false;
+    int             currentPage      = 1;
+    int             pageSize         = 20;
 
     string? openDropdown = null;
 
@@ -354,6 +382,21 @@ else
     const string PageSizeStorageKey   = "collection.pageSize";
     static readonly HashSet<string> ValidSortFields = ["name", "date", "price", "value", "platform"];
     static readonly int[] PageSizeOptions = [10, 15, 20];
+
+    // ── Checklist filter options ──────────────────────────────────────────────
+
+    static (string val, string label)[] ChecklistFilterOptions =>
+    [
+        ("cart-only",      "Solo cartucho/disco"),
+        ("missing-box",    "Sin caja"),
+        ("missing-manual", "Sin manual"),
+        ("complete",       "Checklist completo"),
+        ("incomplete",     "Checklist incompleto"),
+    ];
+
+    string ChecklistFilterLabel => filterChecklist == ""
+        ? "Checklist"
+        : ChecklistFilterOptions.FirstOrDefault(x => x.val == filterChecklist).label ?? "Checklist";
 
     // ── Opciones estáticas ─────────────────────────────────────────────────────
 
@@ -432,6 +475,12 @@ else
 
             if (!string.IsNullOrEmpty(filterCondition))
                 yield return ("condition", filterCondition, TranslateCondition(filterCondition));
+
+            if (!string.IsNullOrEmpty(filterChecklist))
+            {
+                var lbl = ChecklistFilterOptions.FirstOrDefault(x => x.val == filterChecklist).label ?? filterChecklist;
+                yield return ("checklist", filterChecklist, lbl);
+            }
         }
     }
 
@@ -548,6 +597,9 @@ else
         if (!string.IsNullOrWhiteSpace(filterCondition))
             q.Add($"condition={filterCondition}");
 
+        if (!string.IsNullOrWhiteSpace(filterChecklist))
+            q.Add($"checklistFilter={filterChecklist}");
+
         q.Add($"sortBy={sortBy}&desc={descending.ToString().ToLower()}");
         return "api/items?" + string.Join("&", q);
     }
@@ -586,6 +638,7 @@ else
     {
         if (key == "type")      filterType      = value;
         if (key == "condition") filterCondition = value;
+        if (key == "checklist") filterChecklist = value;
         currentPage = 1;
         openDropdown = null;
         await LoadItems();
@@ -609,10 +662,11 @@ else
     {
         switch (key)
         {
-            case "type":      filterType = "";               break;
-            case "platform":  filterPlatforms.Remove(value); break;
-            case "region":    filterRegions.Remove(value);   break;
-            case "condition": filterCondition = "";          break;
+            case "type":      filterType      = "";               break;
+            case "platform":  filterPlatforms.Remove(value);      break;
+            case "region":    filterRegions.Remove(value);        break;
+            case "condition": filterCondition = "";               break;
+            case "checklist": filterChecklist = "";               break;
         }
         currentPage = 1;
         await LoadItems();
@@ -622,6 +676,7 @@ else
     {
         filterType      = "";
         filterCondition = "";
+        filterChecklist = "";
         filterPlatforms.Clear();
         filterRegions.Clear();
         currentPage = 1;
